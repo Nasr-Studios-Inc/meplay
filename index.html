@@ -118,6 +118,116 @@
     #loading.hidden {
       opacity: 0;
     }
+
+    /* ============================================================
+       LOAD TIMEOUT POPUP
+       ============================================================ */
+
+    #loadTimeout {
+      position: fixed;
+
+      top: 22px;
+      right: 22px;
+
+      width: min(380px, calc(100vw - 44px));
+
+      z-index: 100;
+
+      padding: 18px 20px;
+
+      border-radius: 14px;
+
+      background:
+        linear-gradient(
+          135deg,
+          rgba(18, 20, 55, .96),
+          rgba(8, 10, 30, .96)
+        );
+
+      border: 1px solid rgba(170, 120, 255, .38);
+
+      box-shadow:
+        0 12px 45px rgba(0,0,0,.45),
+        0 0 35px rgba(110,70,255,.18),
+        inset 0 1px 0 rgba(255,255,255,.08);
+
+      color: rgba(255,255,255,.92);
+
+      opacity: 0;
+
+      transform:
+        translateX(30px)
+        scale(.96);
+
+      pointer-events: none;
+
+      transition:
+        opacity .45s ease,
+        transform .45s cubic-bezier(.22,1,.36,1);
+    }
+
+    #loadTimeout.show {
+      opacity: 1;
+
+      transform:
+        translateX(0)
+        scale(1);
+
+      pointer-events: auto;
+    }
+
+    #loadTimeoutTitle {
+      display: flex;
+
+      align-items: center;
+      gap: 10px;
+
+      margin-bottom: 8px;
+
+      color: white;
+
+      font-size: 14px;
+      font-weight: 650;
+
+      letter-spacing: .01em;
+    }
+
+    #loadTimeoutIcon {
+      display: flex;
+
+      align-items: center;
+      justify-content: center;
+
+      width: 25px;
+      height: 25px;
+
+      flex-shrink: 0;
+
+      border-radius: 50%;
+
+      background:
+        rgba(155, 100, 255, .18);
+
+      border:
+        1px solid rgba(190, 145, 255, .35);
+
+      color:
+        rgba(210, 180, 255, .95);
+
+      font-size: 14px;
+    }
+
+    #loadTimeoutMessage {
+      margin: 0;
+
+      color: rgba(225,225,240,.78);
+
+      font-size: 12px;
+
+      line-height: 1.55;
+
+      letter-spacing: .01em;
+    }
   </style>
 </head>
 
@@ -134,6 +244,29 @@
 </div>
 
 <div id="flash"></div>
+
+<!-- 90-second loading timeout -->
+<div id="loadTimeout">
+
+  <div id="loadTimeoutTitle">
+
+    <div id="loadTimeoutIcon">
+      !
+    </div>
+
+    <span>
+      MePlay is taking longer than usual
+    </span>
+
+  </div>
+
+  <p id="loadTimeoutMessage">
+    It's taking longer than usual to load. Try rebooting,
+    or if the problem persists, wait an extra 1 minute
+    for an error code to appear, then contact support.
+  </p>
+
+</div>
 
 
 <script>
@@ -168,6 +301,7 @@
   • Has no buttons
   • Has no launcher
   • Has no fake "model missing" popup
+  • Shows a loading warning after 90 seconds
 
   ================================================================
   */
@@ -188,6 +322,94 @@
 
   const flash =
     document.getElementById("flash");
+
+  const loadTimeout =
+    document.getElementById("loadTimeout");
+
+
+  /* ================================================================
+     90 SECOND LOADING TIMEOUT
+     ================================================================ */
+
+  const LOAD_TIMEOUT_MS =
+    90 * 1000;
+
+  let loadTimeoutTimer =
+    null;
+
+
+  /*
+  Start the timer immediately.
+
+  This is intentionally started before the Earth GLB begins loading,
+  so the user gets a warning if the entire loading process takes
+  longer than 1 minute and 30 seconds.
+  */
+
+  function startLoadTimeout() {
+
+    loadTimeoutTimer =
+      setTimeout(
+        () => {
+
+          /*
+          Only show the warning if the Earth has not finished loading.
+          */
+
+          if (
+            !earthReady
+          ) {
+
+            loadTimeout.classList.add(
+              "show"
+            );
+
+            console.warn(
+              "MEPLAY: Earth loading has exceeded 90 seconds."
+            );
+
+          }
+
+        },
+        LOAD_TIMEOUT_MS
+      );
+
+  }
+
+
+  /*
+  Stop the timer once the Earth has successfully loaded.
+  */
+
+  function cancelLoadTimeout() {
+
+    if (
+      loadTimeoutTimer !== null
+    ) {
+
+      clearTimeout(
+        loadTimeoutTimer
+      );
+
+      loadTimeoutTimer =
+        null;
+
+    }
+
+  }
+
+
+  /*
+  Hide the warning if the Earth eventually finishes loading.
+  */
+
+  function hideLoadTimeout() {
+
+    loadTimeout.classList.remove(
+      "show"
+    );
+
+  }
 
 
   /* ================================================================
@@ -647,7 +869,6 @@
       /*
       --------------------------------------------------------------
       FORCE WORLD MATRICES.
-
       --------------------------------------------------------------
       */
 
@@ -938,6 +1159,18 @@
         true;
 
 
+      /*
+      IMPORTANT:
+
+      The Earth finished loading, so the 90-second warning timer
+      is no longer needed.
+      */
+
+      cancelLoadTimeout();
+
+      hideLoadTimeout();
+
+
       loading.classList.add(
         "hidden"
       );
@@ -984,8 +1217,16 @@
 
       Instead we create a very obvious fallback planet so
       the rest of the animation remains testable.
+
+      The timeout warning, if visible, is also hidden because
+      loading has now finished.
       --------------------------------------------------------------
       */
+
+      cancelLoadTimeout();
+
+      hideLoadTimeout();
+
 
       createFallbackEarth();
 
@@ -1818,7 +2059,6 @@
 
     /*
     Start safely outside the Earth.
-
     */
 
     camera.position.set(
@@ -2316,6 +2556,7 @@
       /*
       ------------------------------------------------------------
       CAMERA SAFETY
+      ------------------------------------------------------------
 
       The camera starts FAR outside the Earth.
 
@@ -2390,8 +2631,7 @@
         flash.style.opacity =
           String(
             smoothstep(
-              (t - 0.9) /
-              0.1
+              (t - 0.9) / 0.1
             )
           );
 
@@ -2533,6 +2773,12 @@
      ================================================================ */
 
   resize();
+
+  /*
+  Start the 1:30 loading watchdog BEFORE beginning the GLB load.
+  */
+
+  startLoadTimeout();
 
   loadEarth();
 
