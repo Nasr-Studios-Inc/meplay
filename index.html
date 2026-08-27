@@ -8,20 +8,20 @@
     content="width=device-width,initial-scale=1,viewport-fit=cover"
   >
 
-  <title>MePlay — Cosmic Boot Animation</title>
+  <title>MePlay — Boot Animation</title>
 
-  <!-- ============================================================
+  <!-- =========================================================
        BABYLON.JS
-       ============================================================ -->
+  ========================================================== -->
 
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
 
   <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
 
 
-  <!-- ============================================================
+  <!-- =========================================================
        STYLE
-       ============================================================ -->
+  ========================================================== -->
 
   <style>
 
@@ -52,6 +52,10 @@
     }
 
 
+    /* =========================================================
+       BABYLON CANVAS
+    ========================================================== */
+
     #canvas {
 
       position: fixed;
@@ -66,672 +70,738 @@
     }
 
 
-    /* ============================================================
-       MEPLAY COSMIC LOADING SYSTEM
-       ============================================================ */
+    /* =========================================================
+       LOADING UI
+    ========================================================== */
 
-    #loadingInterface {
+    #loadingUI {
 
       position: fixed;
 
       left: 50%;
-      top: 50%;
 
-      width: min(430px, 78vw);
+      bottom:
+        max(
+          34px,
+          env(safe-area-inset-bottom)
+        );
 
       transform:
-        translate(-50%, -50%);
+        translateX(-50%);
 
-      z-index: 50;
+      width:
+        min(
+          620px,
+          calc(100vw - 44px)
+        );
+
+      z-index: 20;
 
       pointer-events: none;
 
       text-align: center;
 
       transition:
-        opacity .8s ease,
-        transform .8s ease;
+        opacity .7s ease,
+        transform .7s ease;
 
     }
 
 
-    #loadingInterface.hidden {
+    #loadingUI.hidden {
 
       opacity: 0;
 
       transform:
-        translate(-50%, -50%)
-        scale(.92);
+        translateX(-50%)
+        translateY(18px);
 
     }
 
 
-    /* ============================================================
-       COSMIC CORE
-       ============================================================ */
+    /* =========================================================
+       LOADING LABEL
+    ========================================================== */
 
-    .core {
+    #loadingTitle {
 
-      position: relative;
-
-      width: 230px;
-      height: 230px;
-
-      margin: 0 auto 28px;
-
-    }
-
-
-    .core::before {
-
-      content: "";
-
-      position: absolute;
-
-      inset: 35px;
-
-      border-radius: 50%;
-
-      background:
-        radial-gradient(
-          circle,
-          rgba(105,160,255,.20),
-          rgba(60,90,255,.08) 35%,
-          transparent 70%
-        );
-
-      filter:
-        blur(8px);
-
-      animation:
-        corePulse 2.2s ease-in-out infinite;
-
-    }
-
-
-    .core-center {
-
-      position: absolute;
-
-      left: 50%;
-      top: 50%;
-
-      width: 42px;
-      height: 42px;
-
-      transform:
-        translate(-50%, -50%);
-
-      border-radius: 50%;
-
-      background:
-        radial-gradient(
-          circle at 35% 30%,
-          #ffffff,
-          #a9d6ff 20%,
-          #5d91ff 48%,
-          #183b9d 72%,
-          #07112f
-        );
-
-      box-shadow:
-
-        0 0 12px rgba(180,220,255,.95),
-
-        0 0 35px rgba(80,140,255,.85),
-
-        0 0 75px rgba(70,90,255,.55),
-
-        inset 0 0 20px rgba(255,255,255,.65);
-
-      animation:
-        centerPulse 1.8s ease-in-out infinite;
-
-    }
-
-
-    /* ============================================================
-       ORBIT RINGS
-       ============================================================ */
-
-    .orbit {
-
-      position: absolute;
-
-      left: 50%;
-      top: 50%;
-
-      border-radius: 50%;
-
-      border: 1px solid rgba(150,190,255,.28);
-
-      transform:
-        translate(-50%, -50%);
-
-    }
-
-
-    .orbit.one {
-
-      width: 110px;
-      height: 110px;
-
-      border-top-color:
-        rgba(255,255,255,.95);
-
-      border-right-color:
-        rgba(95,155,255,.8);
-
-      animation:
-        orbitOne 2.4s linear infinite;
-
-    }
-
-
-    .orbit.two {
-
-      width: 155px;
-      height: 155px;
-
-      border-left-color:
-        rgba(120,175,255,.9);
-
-      border-bottom-color:
-        rgba(255,255,255,.55);
-
-      animation:
-        orbitTwo 3.4s linear infinite reverse;
-
-    }
-
-
-    .orbit.three {
-
-      width: 205px;
-      height: 205px;
-
-      border-top-color:
-        rgba(255,255,255,.42);
-
-      border-right-color:
-        rgba(100,150,255,.65);
-
-      animation:
-        orbitThree 5.5s linear infinite;
-
-    }
-
-
-    /* ============================================================
-       ENERGY NODES
-       ============================================================ */
-
-    .node {
-
-      position: absolute;
-
-      width: 8px;
-      height: 8px;
-
-      border-radius: 50%;
-
-      background: white;
-
-      box-shadow:
-
-        0 0 8px white,
-
-        0 0 20px rgba(100,170,255,1),
-
-        0 0 35px rgba(80,100,255,.8);
-
-    }
-
-
-    .node.n1 {
-
-      left: 50%;
-      top: 10px;
-
-      transform: translateX(-50%);
-
-      animation:
-        nodeGlow 1.2s ease-in-out infinite;
-
-    }
-
-
-    .node.n2 {
-
-      right: 8px;
-      top: 50%;
-
-      transform: translateY(-50%);
-
-      animation:
-        nodeGlow 1.2s ease-in-out .3s infinite;
-
-    }
-
-
-    .node.n3 {
-
-      left: 18px;
-      bottom: 38px;
-
-      animation:
-        nodeGlow 1.2s ease-in-out .6s infinite;
-
-    }
-
-
-    /* ============================================================
-       SCANNING ARC
-       ============================================================ */
-
-    .scan {
-
-      position: absolute;
-
-      left: 50%;
-      top: 50%;
-
-      width: 220px;
-      height: 220px;
-
-      transform:
-        translate(-50%, -50%);
-
-      border-radius: 50%;
-
-      border:
-
-        3px solid transparent;
-
-      border-top-color:
-        rgba(255,255,255,.95);
-
-      border-right-color:
-        rgba(100,170,255,.85);
-
-      filter:
-        drop-shadow(
-          0 0 8px rgba(110,170,255,.9)
-        );
-
-      animation:
-        scanRotate 1.6s linear infinite;
-
-    }
-
-
-    /* ============================================================
-       LOADING TEXT
-       ============================================================ */
-
-    .loading-title {
-
-      font-size: 15px;
-
-      font-weight: 700;
-
-      letter-spacing: .34em;
-
-      text-transform: uppercase;
+      margin-bottom: 12px;
 
       color:
-        rgba(255,255,255,.96);
+        rgba(
+          255,
+          255,
+          255,
+          .92
+        );
+
+      font-size: 12px;
+
+      font-weight: 600;
+
+      letter-spacing:
+        .32em;
+
+      text-transform:
+        uppercase;
 
       text-shadow:
-
-        0 0 12px rgba(130,180,255,.95),
-
-        0 0 28px rgba(90,110,255,.6);
-
-      margin-bottom: 10px;
+        0 0 12px rgba(120,160,255,.9),
+        0 0 32px rgba(80,100,255,.45);
 
     }
 
 
-    .loading-subtitle {
+    #loadingSubtext {
 
-      font-size: 11px;
-
-      font-weight: 500;
-
-      letter-spacing: .16em;
-
-      text-transform: uppercase;
+      margin-top: 10px;
 
       color:
-        rgba(190,210,255,.66);
+        rgba(
+          190,
+          205,
+          255,
+          .58
+        );
 
-      min-height: 17px;
+      font-size: 10px;
+
+      letter-spacing:
+        .16em;
+
+      text-transform:
+        uppercase;
 
     }
 
 
-    /* ============================================================
-       DIGITAL LOAD METER
-       ============================================================ */
+    /* =========================================================
+       UNIQUE SIGNAL LOADER
+    ========================================================== */
 
-    .meter {
+    #signalLoader {
 
       position: relative;
 
       width: 100%;
 
-      height: 5px;
+      height: 54px;
 
-      margin-top: 20px;
+      padding:
+        12px 18px;
+
+      border-radius: 18px;
+
+      background:
+        linear-gradient(
+          180deg,
+          rgba(18,28,68,.62),
+          rgba(5,9,29,.78)
+        );
+
+      border:
+        1px solid
+        rgba(
+          150,
+          180,
+          255,
+          .22
+        );
+
+      box-shadow:
+
+        0 0 0 1px
+        rgba(
+          255,
+          255,
+          255,
+          .025
+        )
+        inset,
+
+        0 12px 45px
+        rgba(
+          0,
+          0,
+          0,
+          .38
+        ),
+
+        0 0 35px
+        rgba(
+          80,
+          120,
+          255,
+          .12
+        );
 
       overflow: hidden;
 
-      border-radius: 999px;
-
-      background:
-        rgba(255,255,255,.08);
-
-      box-shadow:
-        inset 0 0 8px rgba(0,0,0,.35);
-
     }
 
 
-    .meter-energy {
+    /*
+      The loader is made from a constellation-like path.
+      It is deliberately NOT a conventional progress bar.
+    */
 
-      position: absolute;
+    #signalTrack {
 
-      left: -45%;
+      position: relative;
 
-      top: 0;
-
-      width: 45%;
+      width: 100%;
 
       height: 100%;
-
-      border-radius: 999px;
-
-      background:
-        linear-gradient(
-          90deg,
-          transparent,
-          rgba(160,210,255,.8),
-          white,
-          rgba(100,160,255,.8),
-          transparent
-        );
-
-      box-shadow:
-        0 0 14px rgba(120,180,255,.95);
-
-      animation:
-        energySweep 1.15s linear infinite;
-
-    }
-
-
-    /* ============================================================
-       WARNING POPUP
-       ============================================================ */
-
-    #timeoutWarning {
-
-      position: fixed;
-
-      top: max(22px, env(safe-area-inset-top));
-
-      right: max(22px, env(safe-area-inset-right));
-
-      width: min(370px, calc(100vw - 44px));
-
-      padding: 17px 18px;
-
-      z-index: 100;
-
-      border:
-
-        1px solid rgba(255,190,90,.45);
-
-      border-radius: 14px;
-
-      background:
-        linear-gradient(
-          135deg,
-          rgba(20,25,48,.94),
-          rgba(9,13,30,.96)
-        );
-
-      box-shadow:
-
-        0 15px 50px rgba(0,0,0,.45),
-
-        0 0 35px rgba(255,170,70,.10),
-
-        inset 0 1px 0 rgba(255,255,255,.08);
-
-      backdrop-filter:
-        blur(18px);
-
-      opacity: 0;
-
-      transform:
-        translateX(30px);
-
-      pointer-events: none;
-
-      transition:
-
-        opacity .45s ease,
-
-        transform .45s ease;
-
-    }
-
-
-    #timeoutWarning.show {
-
-      opacity: 1;
-
-      transform:
-        translateX(0);
-
-    }
-
-
-    .warning-header {
 
       display: flex;
 
       align-items: center;
 
-      gap: 10px;
-
-      margin-bottom: 8px;
+      justify-content: space-between;
 
     }
 
 
-    .warning-icon {
+    /* =========================================================
+       SIGNAL LINE
+    ========================================================== */
 
-      width: 25px;
-      height: 25px;
+    #signalLine {
 
-      display: grid;
+      position: absolute;
 
-      place-items: center;
+      left: 5px;
+      right: 5px;
+
+      top: 50%;
+
+      height: 2px;
+
+      transform:
+        translateY(-50%);
+
+      background:
+        linear-gradient(
+          90deg,
+          transparent,
+          rgba(120,160,255,.22),
+          rgba(255,255,255,.18),
+          rgba(120,160,255,.22),
+          transparent
+        );
+
+    }
+
+
+    /* =========================================================
+       SIGNAL NODES
+    ========================================================== */
+
+    .signalNode {
+
+      position: relative;
+
+      width: 13px;
+      height: 13px;
 
       border-radius: 50%;
 
       background:
-        rgba(255,180,70,.13);
+        rgba(
+          100,
+          135,
+          255,
+          .22
+        );
 
       border:
-        1px solid rgba(255,190,90,.4);
+        1px solid
+        rgba(
+          180,
+          200,
+          255,
+          .45
+        );
 
-      color:
-        #ffd28a;
+      box-shadow:
+        0 0 8px
+        rgba(
+          100,
+          150,
+          255,
+          .25
+        );
 
-      font-size: 13px;
-
-    }
-
-
-    .warning-title {
-
-      color:
-        rgba(255,230,190,.95);
-
-      font-size: 12px;
-
-      font-weight: 700;
-
-      letter-spacing: .14em;
-
-      text-transform: uppercase;
+      z-index: 2;
 
     }
 
 
-    .warning-text {
+    .signalNode::after {
 
-      color:
-        rgba(235,240,255,.78);
+      content: "";
 
-      font-size: 12px;
+      position: absolute;
 
-      line-height: 1.55;
+      left: 50%;
+      top: 50%;
 
-    }
+      width: 4px;
+      height: 4px;
 
+      transform:
+        translate(
+          -50%,
+          -50%
+        );
 
-    /* ============================================================
-       ERROR POPUP
-       ============================================================ */
-
-    #timeoutError {
-
-      position: fixed;
-
-      top: max(22px, env(safe-area-inset-top));
-
-      right: max(22px, env(safe-area-inset-right));
-
-      width: min(390px, calc(100vw - 44px));
-
-      padding: 18px;
-
-      z-index: 101;
-
-      border:
-
-        1px solid rgba(255,95,95,.5);
-
-      border-radius: 14px;
+      border-radius: 50%;
 
       background:
-        linear-gradient(
-          135deg,
-          rgba(38,15,24,.96),
-          rgba(16,10,24,.97)
+        rgba(
+          255,
+          255,
+          255,
+          .7
+        );
+
+    }
+
+
+    /* =========================================================
+       ACTIVE SIGNAL
+    ========================================================== */
+
+    .signalNode.active {
+
+      background:
+        rgba(
+          120,
+          180,
+          255,
+          .7
+        );
+
+      border-color:
+        rgba(
+          220,
+          235,
+          255,
+          .9
         );
 
       box-shadow:
 
-        0 15px 55px rgba(0,0,0,.5),
+        0 0 8px
+        rgba(
+          130,
+          180,
+          255,
+          .85
+        ),
 
-        0 0 40px rgba(255,70,100,.12);
+        0 0 20px
+        rgba(
+          80,
+          140,
+          255,
+          .55
+        );
 
-      backdrop-filter:
-        blur(18px);
+    }
+
+
+    /* =========================================================
+       TRAVELING SIGNAL
+    ========================================================== */
+
+    #signalPulse {
+
+      position: absolute;
+
+      top: 50%;
+
+      left: 0;
+
+      width: 72px;
+
+      height: 4px;
+
+      transform:
+        translateY(-50%);
+
+      border-radius: 100px;
+
+      background:
+        linear-gradient(
+          90deg,
+          transparent,
+          rgba(255,255,255,.9),
+          rgba(130,180,255,1),
+          transparent
+        );
+
+      filter:
+        blur(.2px);
+
+      box-shadow:
+
+        0 0 8px
+        rgba(
+          130,
+          190,
+          255,
+          .95
+        ),
+
+        0 0 22px
+        rgba(
+          90,
+          140,
+          255,
+          .55
+        );
+
+      animation:
+        signalTravel
+        2.2s
+        cubic-bezier(.45,0,.55,1)
+        infinite;
+
+    }
+
+
+    @keyframes signalTravel {
+
+      0% {
+
+        left:
+          -12%;
+
+        opacity: 0;
+
+      }
+
+      10% {
+
+        opacity: 1;
+
+      }
+
+      80% {
+
+        opacity: 1;
+
+      }
+
+      100% {
+
+        left:
+          102%;
+
+        opacity: 0;
+
+      }
+
+    }
+
+
+    /* =========================================================
+       COMMAND WARNING
+    ========================================================== */
+
+    #warning {
+
+      position: fixed;
+
+      top: 22px;
+
+      right: 22px;
+
+      z-index: 50;
+
+      width:
+        min(
+          390px,
+          calc(100vw - 44px)
+        );
+
+      padding: 17px 19px;
+
+      border-radius: 15px;
+
+      background:
+        rgba(
+          12,
+          17,
+          38,
+          .94
+        );
+
+      border:
+        1px solid
+        rgba(
+          255,
+          190,
+          90,
+          .35
+        );
+
+      box-shadow:
+
+        0 18px 45px
+        rgba(
+          0,
+          0,
+          0,
+          .4
+        ),
+
+        0 0 30px
+        rgba(
+          255,
+          180,
+          70,
+          .08
+        );
+
+      color:
+        rgba(
+          255,
+          255,
+          255,
+          .9
+        );
 
       opacity: 0;
 
       transform:
-        translateX(30px);
+        translateY(-14px);
 
       pointer-events: none;
 
       transition:
-
         opacity .45s ease,
-
         transform .45s ease;
 
     }
 
 
-    #timeoutError.show {
+    #warning.show {
 
       opacity: 1;
 
       transform:
-        translateX(0);
+        translateY(0);
 
     }
 
 
-    .error-title {
+    #warningTitle {
 
-      color:
-        #ffb1b1;
+      font-size: 11px;
 
-      font-size: 12px;
+      font-weight: 700;
 
-      font-weight: 800;
+      letter-spacing:
+        .16em;
 
-      letter-spacing: .15em;
-
-      text-transform: uppercase;
+      text-transform:
+        uppercase;
 
       margin-bottom: 8px;
 
     }
 
 
-    .error-text {
-
-      color:
-        rgba(255,235,240,.78);
+    #warningText {
 
       font-size: 12px;
 
       line-height: 1.55;
 
+      color:
+        rgba(
+          225,
+          230,
+          245,
+          .72
+        );
+
     }
 
 
-    .error-code {
+    /* =========================================================
+       ERROR PANEL
+    ========================================================== */
+
+    #errorPanel {
+
+      position: fixed;
+
+      inset: 0;
+
+      z-index: 60;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      padding: 24px;
+
+      background:
+        rgba(
+          1,
+          3,
+          15,
+          .74
+        );
+
+      backdrop-filter:
+        blur(8px);
+
+      opacity: 0;
+
+      pointer-events: none;
+
+      transition:
+        opacity .5s ease;
+
+    }
+
+
+    #errorPanel.show {
+
+      opacity: 1;
+
+      pointer-events: auto;
+
+    }
+
+
+    #errorBox {
+
+      width:
+        min(
+          470px,
+          100%
+        );
+
+      padding: 28px;
+
+      border-radius: 20px;
+
+      background:
+        rgba(
+          8,
+          13,
+          32,
+          .97
+        );
+
+      border:
+        1px solid
+        rgba(
+          255,
+          100,
+          100,
+          .32
+        );
+
+      box-shadow:
+        0 30px 80px
+        rgba(
+          0,
+          0,
+          0,
+          .55
+        );
+
+    }
+
+
+    #errorTitle {
+
+      font-size: 14px;
+
+      font-weight: 700;
+
+      letter-spacing:
+        .15em;
+
+      text-transform:
+        uppercase;
+
+      color:
+        rgba(
+          255,
+          225,
+          225,
+          .95
+        );
+
+    }
+
+
+    #errorMessage {
 
       margin-top: 12px;
 
-      padding: 9px 11px;
+      font-size: 13px;
 
-      border-radius: 8px;
-
-      background:
-        rgba(255,255,255,.05);
+      line-height: 1.6;
 
       color:
-        rgba(255,190,200,.9);
+        rgba(
+          220,
+          225,
+          240,
+          .7
+        );
+
+    }
+
+
+    #errorCode {
+
+      margin-top: 18px;
+
+      padding: 12px;
+
+      border-radius: 10px;
+
+      background:
+        rgba(
+          0,
+          0,
+          0,
+          .25
+        );
 
       font-family:
         ui-monospace,
         SFMono-Regular,
         Menlo,
-        Consolas,
         monospace;
 
-      font-size: 11px;
+      font-size: 12px;
 
-      letter-spacing: .08em;
+      color:
+        rgba(
+          255,
+          180,
+          180,
+          .9
+        );
 
     }
 
 
-    /* ============================================================
+    /* =========================================================
        STATUS
-       ============================================================ */
+    ========================================================== */
 
     #status {
 
@@ -740,23 +810,31 @@
       left: 50%;
 
       bottom:
-        max(22px, env(safe-area-inset-bottom));
+        max(
+          18px,
+          env(safe-area-inset-bottom)
+        );
 
       transform:
         translateX(-50%);
 
-      z-index: 20;
+      z-index: 40;
 
       color:
-        rgba(255,255,255,.9);
+        rgba(
+          255,
+          255,
+          255,
+          .9
+        );
 
       font-size: 12px;
 
-      font-weight: 500;
+      letter-spacing:
+        .22em;
 
-      letter-spacing: .2em;
-
-      text-transform: uppercase;
+      text-transform:
+        uppercase;
 
       opacity: 0;
 
@@ -768,10 +846,21 @@
       white-space: nowrap;
 
       text-shadow:
+        0 0 10px
+        rgba(
+          120,
+          160,
+          255,
+          .9
+        ),
 
-        0 0 10px rgba(120,160,255,.9),
-
-        0 0 30px rgba(90,100,255,.5);
+        0 0 30px
+        rgba(
+          90,
+          100,
+          255,
+          .5
+        );
 
     }
 
@@ -783,9 +872,9 @@
     }
 
 
-    /* ============================================================
-       FLASH
-       ============================================================ */
+    /* =========================================================
+       WHITE FLASH
+    ========================================================== */
 
     #flash {
 
@@ -793,7 +882,7 @@
 
       inset: 0;
 
-      z-index: 110;
+      z-index: 55;
 
       background: white;
 
@@ -803,380 +892,921 @@
 
     }
 
-
-    /* ============================================================
-       ANIMATIONS
-       ============================================================ */
-
-    @keyframes corePulse {
-
-      0%,
-      100% {
-        transform: scale(.92);
-        opacity: .65;
-      }
-
-      50% {
-        transform: scale(1.08);
-        opacity: 1;
-      }
-
-    }
-
-
-    @keyframes centerPulse {
-
-      0%,
-      100% {
-        transform:
-          translate(-50%, -50%)
-          scale(.9);
-      }
-
-      50% {
-        transform:
-          translate(-50%, -50%)
-          scale(1.12);
-      }
-
-    }
-
-
-    @keyframes orbitOne {
-
-      from {
-        transform:
-          translate(-50%, -50%)
-          rotate(0deg);
-      }
-
-      to {
-        transform:
-          translate(-50%, -50%)
-          rotate(360deg);
-      }
-
-    }
-
-
-    @keyframes orbitTwo {
-
-      from {
-        transform:
-          translate(-50%, -50%)
-          rotate(0deg)
-          scaleY(.72);
-      }
-
-      to {
-        transform:
-          translate(-50%, -50%)
-          rotate(360deg)
-          scaleY(.72);
-      }
-
-    }
-
-
-    @keyframes orbitThree {
-
-      from {
-        transform:
-          translate(-50%, -50%)
-          rotate(0deg)
-          scaleY(.48);
-      }
-
-      to {
-        transform:
-          translate(-50%, -50%)
-          rotate(360deg)
-          scaleY(.48);
-      }
-
-    }
-
-
-    @keyframes scanRotate {
-
-      from {
-        transform:
-          translate(-50%, -50%)
-          rotate(0deg);
-      }
-
-      to {
-        transform:
-          translate(-50%, -50%)
-          rotate(360deg);
-      }
-
-    }
-
-
-    @keyframes nodeGlow {
-
-      0%,
-      100% {
-        opacity: .35;
-        transform: scale(.7);
-      }
-
-      50% {
-        opacity: 1;
-        transform: scale(1.35);
-      }
-
-    }
-
-
-    @keyframes energySweep {
-
-      from {
-        left: -45%;
-      }
-
-      to {
-        left: 100%;
-      }
-
-    }
-
-
   </style>
+
 </head>
 
 
 <body>
 
-  <!-- ============================================================
-       3D WORLD
-       ============================================================ -->
 
-  <canvas id="canvas"></canvas>
+<!-- =========================================================
+     BABYLON CANVAS
+========================================================== -->
 
-
-  <!-- ============================================================
-       MEPLAY COSMIC LOADING INTERFACE
-       ============================================================ -->
-
-  <div id="loadingInterface">
-
-    <div class="core">
-
-      <div class="orbit one"></div>
-
-      <div class="orbit two"></div>
-
-      <div class="orbit three"></div>
-
-      <div class="scan"></div>
-
-      <div class="node n1"></div>
-
-      <div class="node n2"></div>
-
-      <div class="node n3"></div>
-
-      <div class="core-center"></div>
-
-    </div>
+<canvas id="canvas"></canvas>
 
 
-    <div class="loading-title">
-      MEPLAY
-    </div>
+<!-- =========================================================
+     LOADING INTERFACE
+========================================================== -->
+
+<div id="loadingUI">
+
+  <div id="loadingTitle">
+    Establishing MePlay Connection
+  </div>
 
 
-    <div
-      class="loading-subtitle"
-      id="loadingSubtitle"
-    >
-      Establishing boot channel
-    </div>
+  <div id="signalLoader">
 
+    <div id="signalTrack">
 
-    <div class="meter">
+      <div id="signalLine"></div>
 
-      <div class="meter-energy"></div>
+      <div id="signalPulse"></div>
+
+      <div class="signalNode"></div>
+      <div class="signalNode"></div>
+      <div class="signalNode"></div>
+      <div class="signalNode"></div>
+      <div class="signalNode"></div>
+      <div class="signalNode"></div>
+      <div class="signalNode"></div>
+      <div class="signalNode"></div>
+      <div class="signalNode"></div>
+      <div class="signalNode"></div>
 
     </div>
 
   </div>
 
 
-  <!-- ============================================================
-       90 SECOND WARNING
-       ============================================================ -->
-
-  <div id="timeoutWarning">
-
-    <div class="warning-header">
-
-      <div class="warning-icon">
-        !
-      </div>
-
-      <div class="warning-title">
-        Boot Taking Longer
-      </div>
-
-    </div>
-
-
-    <div class="warning-text">
-
-      Its taking longer then usual to load.
-      Try rebooting or, if the problem persists,
-      wait an extra 1 minute for an error code to
-      appear, then contact support.
-
-    </div>
-
+  <div id="loadingSubtext">
+    Waiting for MePlay kernel
   </div>
 
+</div>
 
-  <!-- ============================================================
-       ERROR
-       ============================================================ -->
 
-  <div id="timeoutError">
+<!-- =========================================================
+     WARNING
+========================================================== -->
 
-    <div class="error-title">
+<div id="warning">
+
+  <div id="warningTitle">
+    MePlay is taking longer than usual
+  </div>
+
+  <div id="warningText">
+    Try rebooting. If the problem persists, wait another
+    1 minute for an error code to appear, then contact support.
+  </div>
+
+</div>
+
+
+<!-- =========================================================
+     ERROR PANEL
+========================================================== -->
+
+<div id="errorPanel">
+
+  <div id="errorBox">
+
+    <div id="errorTitle">
       MePlay Boot Timeout
     </div>
 
-
-    <div class="error-text">
-
-      The MePlay Island boot command was not received
-      within the expected startup period.
-
+    <div id="errorMessage">
+      The MePlay kernel did not send the required
+      loading-complete command within the expected time.
     </div>
 
+    <div id="errorCode">
+      Error Code: MPLAY-BOOT-001
 
-    <div class="error-code">
-      ERROR CODE: MP-BOOT-CMD-150
+      <br>
+
+      Waiting for:
+      meplay.boot.animation.command(loading-complete:"true")
     </div>
 
   </div>
 
-
-  <!-- ============================================================
-       STATUS
-       ============================================================ -->
-
-  <div id="status">
-    Entering MePlay
-  </div>
+</div>
 
 
-  <!-- ============================================================
-       WHITE TRANSITION
-       ============================================================ -->
+<!-- =========================================================
+     BOOT STATUS
+========================================================== -->
 
-  <div id="flash"></div>
-
-
-  <script>
-
-  (() => {
-
-    "use strict";
+<div id="status">
+  Entering MePlay Island
+</div>
 
 
-    /* ============================================================
-       DOM
-       ============================================================ */
+<!-- =========================================================
+     FLASH
+========================================================== -->
 
-    const canvas =
-      document.getElementById("canvas");
-
-
-    const loadingInterface =
-      document.getElementById("loadingInterface");
+<div id="flash"></div>
 
 
-    const loadingSubtitle =
-      document.getElementById("loadingSubtitle");
+<script>
+
+(() => {
+
+  "use strict";
 
 
-    const timeoutWarning =
-      document.getElementById("timeoutWarning");
+  /* =========================================================
+     DOM
+  ========================================================== */
+
+  const canvas =
+    document.getElementById("canvas");
+
+  const loadingUI =
+    document.getElementById("loadingUI");
+
+  const loadingTitle =
+    document.getElementById("loadingTitle");
+
+  const loadingSubtext =
+    document.getElementById("loadingSubtext");
+
+  const warning =
+    document.getElementById("warning");
+
+  const errorPanel =
+    document.getElementById("errorPanel");
+
+  const status =
+    document.getElementById("status");
+
+  const flash =
+    document.getElementById("flash");
+
+  const signalNodes =
+    document.querySelectorAll(".signalNode");
 
 
-    const timeoutError =
-      document.getElementById("timeoutError");
+  /* =========================================================
+     ENGINE
+  ========================================================== */
+
+  const engine =
+    new BABYLON.Engine(
+      canvas,
+      true,
+      {
+        antialias: true,
+        preserveDrawingBuffer: true,
+        stencil: true
+      },
+      true
+    );
 
 
-    const status =
-      document.getElementById("status");
+  /* =========================================================
+     SCENE
+  ========================================================== */
+
+  const scene =
+    new BABYLON.Scene(engine);
+
+  scene.clearColor =
+    new BABYLON.Color4(
+      0.002,
+      0.004,
+      0.025,
+      1
+    );
 
 
-    const flash =
-      document.getElementById("flash");
+  /* =========================================================
+     CAMERA
+  ========================================================== */
+
+  const camera =
+    new BABYLON.UniversalCamera(
+      "camera",
+      new BABYLON.Vector3(
+        0,
+        0.25,
+        8
+      ),
+      scene
+    );
+
+  camera.fov =
+    0.72;
+
+  camera.minZ =
+    0.05;
+
+  camera.maxZ =
+    5000;
+
+  camera.setTarget(
+    BABYLON.Vector3.Zero()
+  );
 
 
-    /* ============================================================
-       ENGINE
-       ============================================================ */
+  /* =========================================================
+     LIGHTING
+  ========================================================== */
 
-    const engine =
-      new BABYLON.Engine(
-        canvas,
-        true,
-        {
-          antialias: true,
-          preserveDrawingBuffer: true,
-          stencil: true
-        },
+  const sun =
+    new BABYLON.DirectionalLight(
+      "sun",
+      new BABYLON.Vector3(
+        -0.5,
+        -0.7,
+        -1
+      ),
+      scene
+    );
+
+  sun.intensity =
+    1.35;
+
+  sun.diffuse =
+    new BABYLON.Color3(
+      1,
+      0.96,
+      0.86
+    );
+
+
+  const hemi =
+    new BABYLON.HemisphericLight(
+      "hemi",
+      new BABYLON.Vector3(
+        0.2,
+        1,
+        0.3
+      ),
+      scene
+    );
+
+  hemi.intensity =
+    0.6;
+
+  hemi.diffuse =
+    new BABYLON.Color3(
+      0.65,
+      0.78,
+      1
+    );
+
+  hemi.groundColor =
+    new BABYLON.Color3(
+      0.025,
+      0.035,
+      0.09
+    );
+
+
+  const rim =
+    new BABYLON.PointLight(
+      "rim",
+      new BABYLON.Vector3(
+        -5,
+        3,
+        6
+      ),
+      scene
+    );
+
+  rim.intensity =
+    18;
+
+  rim.diffuse =
+    new BABYLON.Color3(
+      0.22,
+      0.4,
+      1
+    );
+
+
+  /* =========================================================
+     STAR FIELD
+  ========================================================== */
+
+  const STAR_COUNT =
+    1800;
+
+  const starPositions =
+    [];
+
+  const starColors =
+    [];
+
+
+  for (
+    let i = 0;
+    i < STAR_COUNT;
+    i++
+  ) {
+
+    const radius =
+      35 +
+      Math.random() * 130;
+
+    const theta =
+      Math.random() *
+      Math.PI *
+      2;
+
+    const phi =
+      Math.acos(
+        2 * Math.random() - 1
+      );
+
+
+    starPositions.push(
+
+      radius *
+      Math.sin(phi) *
+      Math.cos(theta),
+
+      radius *
+      Math.cos(phi),
+
+      radius *
+      Math.sin(phi) *
+      Math.sin(theta)
+
+    );
+
+
+    const tint =
+      Math.random();
+
+
+    if (
+      tint < 0.2
+    ) {
+
+      starColors.push(
+        0.55,
+        0.72,
+        1
+      );
+
+    }
+
+    else if (
+      tint < 0.38
+    ) {
+
+      starColors.push(
+        0.86,
+        0.64,
+        1
+      );
+
+    }
+
+    else {
+
+      starColors.push(
+        1,
+        0.97,
+        1
+      );
+
+    }
+
+  }
+
+
+  const stars =
+    new BABYLON.Mesh(
+      "stars",
+      scene
+    );
+
+
+  const starData =
+    new BABYLON.VertexData();
+
+  starData.positions =
+    starPositions;
+
+  starData.colors =
+    starColors;
+
+
+  starData.applyToMesh(
+    stars,
+    true
+  );
+
+
+  const starMaterial =
+    new BABYLON.StandardMaterial(
+      "starMaterial",
+      scene
+    );
+
+  starMaterial.pointsCloud =
+    true;
+
+  starMaterial.pointSize =
+    2;
+
+  starMaterial.disableLighting =
+    true;
+
+  starMaterial.emissiveColor =
+    new BABYLON.Color3(
+      1,
+      1,
+      1
+    );
+
+  starMaterial.alpha =
+    0.9;
+
+
+  stars.material =
+    starMaterial;
+
+
+  /* =========================================================
+     EARTH ROOT
+  ========================================================== */
+
+  const earthRoot =
+    new BABYLON.TransformNode(
+      "EarthRoot",
+      scene
+    );
+
+
+  let earthMeshes =
+    [];
+
+  let earthReady =
+    false;
+
+  let earthRadius =
+    1.4;
+
+
+  /* =========================================================
+     BOOT STATE
+  ========================================================== */
+
+  let bootStarted =
+    false;
+
+  let loadingCompleteReceived =
+    false;
+
+  let finished =
+    false;
+
+  let startTime =
+    0;
+
+  let commandTime =
+    0;
+
+
+  /*
+    IMPORTANT:
+
+    This timer is NOT an Earth-loading timeout.
+
+    Earth loading happens independently.
+
+    The timer begins when the boot animation becomes active
+    and watches ONLY for:
+
+      meplay.boot.animation.command(
+        loading-complete:"true"
+      )
+  */
+
+  let warningShown =
+    false;
+
+  let errorShown =
+    false;
+
+
+  /* =========================================================
+     EARTH LOADING
+  ========================================================== */
+
+  async function loadEarth() {
+
+    console.log(
+      "MEPLAY: Loading local Earth GLB..."
+    );
+
+
+    try {
+
+      const container =
+        await BABYLON.SceneLoader.LoadAssetContainerAsync(
+          "./",
+          "earth-cartoon.glb",
+          scene
+        );
+
+
+      console.log(
+        "MEPLAY: Earth GLB loaded."
+      );
+
+
+      container.addAllToScene();
+
+
+      const importedRoots =
+        container.rootNodes.slice();
+
+
+      importedRoots.forEach(
+        node => {
+
+          if (
+            node &&
+            node !== earthRoot
+          ) {
+
+            node.parent =
+              earthRoot;
+
+          }
+
+        }
+      );
+
+
+      earthMeshes =
+        container.meshes.filter(
+          mesh =>
+            mesh &&
+            mesh !== stars &&
+            mesh.getTotalVertices() > 0
+        );
+
+
+      if (
+        earthMeshes.length === 0
+      ) {
+
+        throw new Error(
+          "No renderable Earth meshes found."
+        );
+
+      }
+
+
+      /*
+        Calculate original bounds.
+      */
+
+      earthRoot.position =
+        BABYLON.Vector3.Zero();
+
+      earthRoot.rotation =
+        BABYLON.Vector3.Zero();
+
+      earthRoot.scaling =
+        BABYLON.Vector3.One();
+
+
+      earthRoot.computeWorldMatrix(
         true
       );
 
 
-    /* ============================================================
-       SCENE
-       ============================================================ */
+      earthMeshes.forEach(
+        mesh => {
 
-    const scene =
-      new BABYLON.Scene(engine);
+          mesh.computeWorldMatrix(
+            true
+          );
 
-
-    scene.clearColor =
-      new BABYLON.Color4(
-        0.002,
-        0.004,
-        0.025,
-        1
+        }
       );
 
 
-    /* ============================================================
-       CAMERA
-       ============================================================ */
-
-    const camera =
-      new BABYLON.UniversalCamera(
-        "camera",
+      let minimum =
         new BABYLON.Vector3(
-          0,
-          0,
-          8
-        ),
+          Infinity,
+          Infinity,
+          Infinity
+        );
+
+
+      let maximum =
+        new BABYLON.Vector3(
+          -Infinity,
+          -Infinity,
+          -Infinity
+        );
+
+
+      earthMeshes.forEach(
+        mesh => {
+
+          const box =
+            mesh
+              .getBoundingInfo()
+              .boundingBox;
+
+
+          minimum =
+            BABYLON.Vector3.Minimize(
+              minimum,
+              box.minimumWorld
+            );
+
+
+          maximum =
+            BABYLON.Vector3.Maximize(
+              maximum,
+              box.maximumWorld
+            );
+
+        }
+      );
+
+
+      const dimensions =
+        maximum.subtract(
+          minimum
+        );
+
+
+      const largestDimension =
+        Math.max(
+          dimensions.x,
+          dimensions.y,
+          dimensions.z
+        );
+
+
+      if (
+        !Number.isFinite(
+          largestDimension
+        ) ||
+        largestDimension <= 0
+      ) {
+
+        throw new Error(
+          "Invalid Earth dimensions."
+        );
+
+      }
+
+
+      /*
+        Center entire hierarchy.
+      */
+
+      const center =
+        minimum
+          .add(maximum)
+          .scale(0.5);
+
+
+      earthRoot.position =
+        center.scale(-1);
+
+
+      /*
+        Preserve the same target diameter.
+      */
+
+      const targetDiameter =
+        2.8;
+
+
+      const modelScale =
+        targetDiameter /
+        largestDimension;
+
+
+      earthRoot.scaling =
+        new BABYLON.Vector3(
+          modelScale,
+          modelScale,
+          modelScale
+        );
+
+
+      earthRadius =
+        targetDiameter / 2;
+
+
+      earthRoot.computeWorldMatrix(
+        true
+      );
+
+
+      earthMeshes.forEach(
+        mesh => {
+
+          mesh.computeWorldMatrix(
+            true
+          );
+
+        }
+      );
+
+
+      earthReady =
+        true;
+
+
+      console.log(
+        "MEPLAY: EARTH READY."
+      );
+
+
+      /*
+        The Earth is ready immediately.
+
+        It does NOT control the timeout.
+      */
+
+      startBoot();
+
+    }
+
+    catch (
+      error
+    ) {
+
+      console.error(
+        "MEPLAY EARTH LOAD ERROR:",
+        error
+      );
+
+
+      /*
+        Keep the animation functional if the GLB
+        itself fails.
+
+        This is NOT the 90-second warning.
+      */
+
+      createFallbackEarth();
+
+      startBoot();
+
+    }
+
+  }
+
+
+  /* =========================================================
+     FALLBACK EARTH
+  ========================================================== */
+
+  function createFallbackEarth() {
+
+    const fallback =
+      BABYLON.MeshBuilder.CreateSphere(
+        "FallbackEarth",
+        {
+          diameter: 2.8,
+          segments: 64
+        },
         scene
       );
 
 
-    camera.fov =
-      0.72;
+    const material =
+      new BABYLON.StandardMaterial(
+        "FallbackEarthMaterial",
+        scene
+      );
 
 
-    camera.minZ =
-      0.05;
+    material.diffuseColor =
+      new BABYLON.Color3(
+        0.06,
+        0.28,
+        0.75
+      );
 
 
-    camera.maxZ =
-      5000;
+    material.emissiveColor =
+      new BABYLON.Color3(
+        0.008,
+        0.02,
+        0.06
+      );
+
+
+    material.specularColor =
+      new BABYLON.Color3(
+        0.65,
+        0.75,
+        1
+      );
+
+
+    material.specularPower =
+      64;
+
+
+    fallback.material =
+      material;
+
+    fallback.parent =
+      earthRoot;
+
+    fallback.position =
+      BABYLON.Vector3.Zero();
+
+
+    earthRadius =
+      1.4;
+
+    earthReady =
+      true;
+
+  }
+
+
+  /* =========================================================
+     START BOOT
+  ========================================================== */
+
+  function startBoot() {
+
+    if (
+      bootStarted
+    ) {
+
+      return;
+
+    }
+
+
+    if (
+      !earthReady
+    ) {
+
+      return;
+
+    }
+
+
+    bootStarted =
+      true;
+
+
+    finished =
+      false;
+
+
+    loadingCompleteReceived =
+      false;
+
+
+    warningShown =
+      false;
+
+
+    errorShown =
+      false;
+
+
+    startTime =
+      performance.now();
+
+
+    /*
+      Earth starts tiny exactly like the existing
+      animation.
+    */
+
+    earthRoot.scaling =
+      new BABYLON.Vector3(
+        0.001,
+        0.001,
+        0.001
+      );
+
+
+    camera.position.set(
+      0,
+      0.25,
+      8
+    );
 
 
     camera.setTarget(
@@ -1184,859 +1814,194 @@
     );
 
 
-    /* ============================================================
-       LIGHTING
-       ============================================================ */
-
-    const sun =
-      new BABYLON.DirectionalLight(
-        "sun",
-        new BABYLON.Vector3(
-          -0.5,
-          -0.7,
-          -1
-        ),
-        scene
-      );
-
-
-    sun.intensity =
-      1.35;
-
-
-    sun.diffuse =
-      new BABYLON.Color3(
-        1,
-        0.96,
-        0.86
-      );
-
-
-    const hemi =
-      new BABYLON.HemisphericLight(
-        "hemi",
-        new BABYLON.Vector3(
-          0.2,
-          1,
-          0.3
-        ),
-        scene
-      );
-
-
-    hemi.intensity =
-      0.6;
-
-
-    hemi.diffuse =
-      new BABYLON.Color3(
-        0.65,
-        0.78,
-        1
-      );
-
-
-    hemi.groundColor =
-      new BABYLON.Color3(
-        0.025,
-        0.035,
-        0.09
-      );
-
-
-    const rim =
-      new BABYLON.PointLight(
-        "rim",
-        new BABYLON.Vector3(
-          -5,
-          3,
-          6
-        ),
-        scene
-      );
-
-
-    rim.intensity =
-      18;
-
-
-    rim.diffuse =
-      new BABYLON.Color3(
-        0.22,
-        0.4,
-        1
-      );
-
-
-    /* ============================================================
-       STARS
-       ============================================================ */
-
-    const STAR_COUNT =
-      1800;
-
-
-    const starPositions =
-      [];
-
-
-    const starColors =
-      [];
-
-
-    for (
-      let i = 0;
-      i < STAR_COUNT;
-      i++
-    ) {
-
-      const radius =
-        35 +
-        Math.random() * 130;
-
-
-      const theta =
-        Math.random() *
-        Math.PI *
-        2;
-
-
-      const phi =
-        Math.acos(
-          2 * Math.random() - 1
-        );
-
-
-      starPositions.push(
-
-        radius *
-        Math.sin(phi) *
-        Math.cos(theta),
-
-        radius *
-        Math.cos(phi),
-
-        radius *
-        Math.sin(phi) *
-        Math.sin(theta)
-
-      );
-
-
-      const tint =
-        Math.random();
-
-
-      if (tint < .2) {
-
-        starColors.push(
-          .55,
-          .72,
-          1
-        );
-
-      }
-      else if (tint < .38) {
-
-        starColors.push(
-          .86,
-          .64,
-          1
-        );
-
-      }
-      else {
-
-        starColors.push(
-          1,
-          .97,
-          1
-        );
-
-      }
-
-    }
-
-
-    const stars =
-      new BABYLON.Mesh(
-        "stars",
-        scene
-      );
-
-
-    const starData =
-      new BABYLON.VertexData();
-
-
-    starData.positions =
-      starPositions;
-
-
-    starData.colors =
-      starColors;
-
-
-    starData.applyToMesh(
-      stars,
-      true
+    console.log(
+      "MEPLAY: BOOT ANIMATION STARTED."
     );
 
+    console.log(
+      'MEPLAY: Waiting for loading-complete:"true"...'
+    );
 
-    const starMaterial =
-      new BABYLON.StandardMaterial(
-        "starMaterial",
-        scene
-      );
+  }
 
 
-    starMaterial.pointsCloud =
-      true;
+  /* =========================================================
+     LOADING COMMAND
+  ========================================================== */
 
-
-    starMaterial.pointSize =
-      2;
-
-
-    starMaterial.disableLighting =
-      true;
-
-
-    starMaterial.emissiveColor =
-      new BABYLON.Color3(
-        1,
-        1,
-        1
-      );
-
-
-    starMaterial.alpha =
-      .9;
-
-
-    stars.material =
-      starMaterial;
-
-
-    /* ============================================================
-       EARTH ROOT
-       ============================================================ */
-
-    const earthRoot =
-      new BABYLON.TransformNode(
-        "EarthRoot",
-        scene
-      );
-
-
-    earthRoot.position =
-      BABYLON.Vector3.Zero();
-
-
-    earthRoot.rotation =
-      BABYLON.Vector3.Zero();
-
-
-    earthRoot.scaling =
-      new BABYLON.Vector3(
-        .001,
-        .001,
-        .001
-      );
-
-
-    let earthMeshes =
-      [];
-
-
-    let earthReady =
-      false;
-
-
-    let earthRadius =
-      1.4;
-
-
-    /* ============================================================
-       LOAD EARTH
-       ============================================================ */
-
-    async function loadEarth() {
-
-      try {
-
-        loadingSubtitle.textContent =
-          "Loading world geometry";
-
-
-        const container =
-          await BABYLON.SceneLoader.LoadAssetContainerAsync(
-            "./",
-            "earth-cartoon.glb",
-            scene
-          );
-
-
-        container.addAllToScene();
-
-
-        const importedRoots =
-          container.rootNodes.slice();
-
-
-        importedRoots.forEach(
-          node => {
-
-            if (
-              node &&
-              node !== earthRoot
-            ) {
-
-              node.parent =
-                earthRoot;
-
-            }
-
-          }
-        );
-
-
-        earthMeshes =
-          container.meshes.filter(
-            mesh =>
-              mesh &&
-              mesh !== stars &&
-              mesh.getTotalVertices() > 0
-          );
-
-
-        if (
-          earthMeshes.length === 0
-        ) {
-
-          throw new Error(
-            "No renderable Earth meshes."
-          );
-
-        }
-
-
-        earthRoot.position =
-          BABYLON.Vector3.Zero();
-
-
-        earthRoot.rotation =
-          BABYLON.Vector3.Zero();
-
-
-        earthRoot.scaling =
-          BABYLON.Vector3.One();
-
-
-        earthRoot.computeWorldMatrix(
-          true
-        );
-
-
-        earthMeshes.forEach(
-          mesh =>
-            mesh.computeWorldMatrix(true)
-        );
-
-
-        let minimum =
-          new BABYLON.Vector3(
-            Infinity,
-            Infinity,
-            Infinity
-          );
-
-
-        let maximum =
-          new BABYLON.Vector3(
-            -Infinity,
-            -Infinity,
-            -Infinity
-          );
-
-
-        earthMeshes.forEach(
-          mesh => {
-
-            const box =
-              mesh.getBoundingInfo()
-                .boundingBox;
-
-
-            minimum =
-              BABYLON.Vector3.Minimize(
-                minimum,
-                box.minimumWorld
-              );
-
-
-            maximum =
-              BABYLON.Vector3.Maximize(
-                maximum,
-                box.maximumWorld
-              );
-
-          }
-        );
-
-
-        const dimensions =
-          maximum.subtract(
-            minimum
-          );
-
-
-        const center =
-          minimum
-            .add(maximum)
-            .scale(.5);
-
-
-        const largestDimension =
-          Math.max(
-            dimensions.x,
-            dimensions.y,
-            dimensions.z
-          );
-
-
-        if (
-          !Number.isFinite(
-            largestDimension
-          ) ||
-          largestDimension <= 0
-        ) {
-
-          throw new Error(
-            "Invalid Earth dimensions."
-          );
-
-        }
-
-
-        earthRoot.position =
-          center.scale(-1);
-
-
-        const targetDiameter =
-          2.8;
-
-
-        const modelScale =
-          targetDiameter /
-          largestDimension;
-
-
-        earthRoot.scaling =
-          new BABYLON.Vector3(
-            modelScale,
-            modelScale,
-            modelScale
-          );
-
-
-        earthRadius =
-          targetDiameter / 2;
-
-
-        earthRoot.computeWorldMatrix(
-          true
-        );
-
-
-        earthReady =
-          true;
-
-
-        loadingSubtitle.textContent =
-          "World loaded • waiting for boot command";
-
-
-        console.log(
-          "MEPLAY: Earth ready."
-        );
-
-
-      }
-      catch (error) {
-
-        console.error(
-          "MEPLAY: Earth failed to load.",
-          error
-        );
-
-
-        /*
-        IMPORTANT:
-
-        The timeout system is NOT connected to Earth
-        loading.
-
-        We still create a simple emergency visual
-        so the boot system can continue functioning.
-        */
-
-        createFallbackEarth();
-
-
-        earthReady =
-          true;
-
-
-        loadingSubtitle.textContent =
-          "World ready • waiting for boot command";
-
-      }
-
-    }
-
-
-    /* ============================================================
-       FALLBACK EARTH
-       ============================================================ */
-
-    function createFallbackEarth() {
-
-      const fallback =
-        BABYLON.MeshBuilder.CreateSphere(
-          "FallbackEarth",
-          {
-            diameter: 2.8,
-            segments: 64
-          },
-          scene
-        );
-
-
-      const material =
-        new BABYLON.StandardMaterial(
-          "FallbackEarthMaterial",
-          scene
-        );
-
-
-      material.diffuseColor =
-        new BABYLON.Color3(
-          .06,
-          .28,
-          .75
-        );
-
-
-      material.emissiveColor =
-        new BABYLON.Color3(
-          .008,
-          .02,
-          .06
-        );
-
-
-      material.specularColor =
-        new BABYLON.Color3(
-          .65,
-          .75,
-          1
-        );
-
-
-      material.specularPower =
-        64;
-
-
-      fallback.material =
-        material;
-
-
-      fallback.parent =
-        earthRoot;
-
-
-      fallback.position =
-        BABYLON.Vector3.Zero();
-
-
-      earthRadius =
-        1.4;
-
-    }
-
-
-    /* ============================================================
-       BOOT STATE
-       ============================================================ */
-
-    let bootCommandReceived =
-      false;
-
-
-    let started =
-      false;
-
-
-    let finished =
-      false;
-
-
-    let startTime =
-      0;
-
+  function meplayBootCommand(command) {
 
     /*
-    This timer is completely independent from
-    Earth loading.
+      Accept:
 
-    It begins when this page initializes.
+      "loading-complete:true"
 
-    90 seconds:
-      warning
+      OR
 
-    150 seconds:
-      error code
+      {
+        loading-complete: "true"
+      }
 
+      OR
+
+      {
+        "loading-complete": "true"
+      }
     */
 
-    const timeoutStart =
+
+    let completed =
+      false;
+
+
+    if (
+      command ===
+      'loading-complete:true'
+    ) {
+
+      completed =
+        true;
+
+    }
+
+
+    if (
+      command ===
+      'loading-complete:"true"'
+    ) {
+
+      completed =
+        true;
+
+    }
+
+
+    if (
+      typeof command ===
+      "object" &&
+      command !== null
+    ) {
+
+      if (
+        command[
+          "loading-complete"
+        ] ===
+        "true"
+      ) {
+
+        completed =
+          true;
+
+      }
+
+    }
+
+
+    if (
+      !completed
+    ) {
+
+      return false;
+
+    }
+
+
+    if (
+      loadingCompleteReceived
+    ) {
+
+      return true;
+
+    }
+
+
+    loadingCompleteReceived =
+      true;
+
+
+    commandTime =
       performance.now();
 
 
-    let warningShown =
-      false;
-
-
-    let errorShown =
-      false;
-
-
-    /* ============================================================
-       BOOT COMMAND RECEIVER
-       ============================================================ */
-
-    function receiveBootCommand(command) {
-
-      console.log(
-        "MEPLAY BOOT COMMAND:",
-        command
-      );
-
-
-      if (
-        command ===
-        'meplay.boot.animation.command(loading-complete:"true")'
-      ) {
-
-        bootCommandReceived =
-          true;
-
-
-        loadingSubtitle.textContent =
-          "Boot command received";
-
-
-        timeoutWarning.classList.remove(
-          "show"
-        );
-
-
-        timeoutError.classList.remove(
-          "show"
-        );
-
-
-        if (
-          earthReady
-        ) {
-
-          startBoot();
-
-        }
-
-      }
-
-    }
-
-
-    /* ============================================================
-       COMMAND CHANNELS
-       ============================================================ */
-
-    /*
-    1. postMessage
-
-    This allows the future MePlay kernel / island
-    environment to send the command into this boot
-    animation.
-    */
-
-    window.addEventListener(
-      "message",
-      event => {
-
-        const data =
-          event.data;
-
-
-        if (
-          typeof data === "string"
-        ) {
-
-          receiveBootCommand(
-            data
-          );
-
-          return;
-
-        }
-
-
-        if (
-          data &&
-          typeof data.command === "string"
-        ) {
-
-          receiveBootCommand(
-            data.command
-          );
-
-        }
-
-      }
+    warning.classList.remove(
+      "show"
     );
 
 
-    /*
-    2. Custom DOM event
-
-    This gives the MePlay kernel another clean
-    way to communicate with the animation.
-    */
-
-    window.addEventListener(
-      "meplay.boot.animation.command",
-      event => {
-
-        const command =
-          event.detail;
-
-
-        if (
-          typeof command === "string"
-        ) {
-
-          receiveBootCommand(
-            command
-          );
-
-        }
-        else if (
-          command &&
-          typeof command.command === "string"
-        ) {
-
-          receiveBootCommand(
-            command.command
-          );
-
-        }
-
-      }
+    loadingUI.classList.add(
+      "hidden"
     );
 
 
-    /* ============================================================
-       EASING
-       ============================================================ */
+    loadingTitle.textContent =
+      "Connection Established";
 
-    function clamp01(value) {
 
-      return Math.max(
-        0,
-        Math.min(
-          1,
-          value
-        )
+    loadingSubtext.textContent =
+      "Entering MePlay Island";
+
+
+    /*
+      This is the exact point where
+      the final zoom is allowed to begin.
+    */
+
+    console.log(
+      'MEPLAY: loading-complete:"true" RECEIVED.'
+    );
+
+
+    return true;
+
+  }
+
+
+  /*
+    Public JavaScript API.
+
+    The MePlay kernel can call:
+
+      window.meplay.boot.animation.command(
+        'loading-complete:true'
       );
 
-    }
+    or:
+
+      window.meplayBootCommand(
+        'loading-complete:true'
+      );
+  */
+
+  window.meplayBootCommand =
+    meplayBootCommand;
 
 
-    function lerp(
-      a,
-      b,
-      t
-    ) {
-
-      return a +
-        (b - a) *
-        t;
-
-    }
+  window.meplay =
+    window.meplay || {};
 
 
-    function easeInOutCubic(t) {
-
-      t =
-        clamp01(t);
+  window.meplay.boot =
+    window.meplay.boot || {};
 
 
-      return t < .5
-
-        ? 4 *
-          t *
-          t *
-          t
-
-        : 1 -
-          Math.pow(
-            -2 * t + 2,
-            3
-          ) / 2;
-
-    }
+  window.meplay.boot.animation =
+    window.meplay.boot.animation || {};
 
 
-    function easeOutCubic(t) {
-
-      t =
-        clamp01(t);
+  window.meplay.boot.animation.command =
+    meplayBootCommand;
 
 
-      return 1 -
-        Math.pow(
-          1 - t,
-          3
-        );
+  /* =========================================================
+     POSTMESSAGE SUPPORT
+  ========================================================== */
 
-    }
-
-
-    function smoothstep(t) {
-
-      t =
-        clamp01(t);
-
-
-      return t *
-        t *
-        (3 - 2 * t);
-
-    }
-
-
-    /* ============================================================
-       START BOOT
-       ============================================================ */
-
-    function startBoot() {
+  window.addEventListener(
+    "message",
+    event => {
 
       if (
-        started ||
-        !earthReady ||
-        !bootCommandReceived
+        !event.data
       ) {
 
         return;
@@ -2044,170 +2009,364 @@
       }
 
 
-      started =
+      /*
+        Supports:
+
+        postMessage(
+          'meplay.boot.animation.command(loading-complete:"true")'
+        )
+
+        and
+
+        postMessage({
+          command:
+            'loading-complete:true'
+        })
+      */
+
+      if (
+        typeof event.data ===
+        "string"
+      ) {
+
+        if (
+          event.data.includes(
+            'loading-complete:"true"'
+          ) ||
+          event.data.includes(
+            "loading-complete:true"
+          )
+        ) {
+
+          meplayBootCommand(
+            'loading-complete:true'
+          );
+
+        }
+
+      }
+
+
+      if (
+        typeof event.data ===
+        "object"
+      ) {
+
+        if (
+          event.data.command
+        ) {
+
+          meplayBootCommand(
+            event.data.command
+          );
+
+        }
+
+        else {
+
+          meplayBootCommand(
+            event.data
+          );
+
+        }
+
+      }
+
+    }
+  );
+
+
+  /* =========================================================
+     EASING
+  ========================================================== */
+
+  function clamp01(
+    value
+  ) {
+
+    return Math.max(
+      0,
+      Math.min(
+        1,
+        value
+      )
+    );
+
+  }
+
+
+  function lerp(
+    a,
+    b,
+    t
+  ) {
+
+    return a +
+      (b - a) *
+      t;
+
+  }
+
+
+  function easeOutCubic(
+    t
+  ) {
+
+    t =
+      clamp01(t);
+
+    return 1 -
+      Math.pow(
+        1 - t,
+        3
+      );
+
+  }
+
+
+  function easeInOutCubic(
+    t
+  ) {
+
+    t =
+      clamp01(t);
+
+    return t < 0.5
+
+      ? 4 *
+        t *
+        t *
+        t
+
+      : 1 -
+        Math.pow(
+          -2 * t + 2,
+          3
+        ) / 2;
+
+  }
+
+
+  function smoothstep(
+    t
+  ) {
+
+    t =
+      clamp01(t);
+
+    return t *
+      t *
+      (3 - 2 * t);
+
+  }
+
+
+  /* =========================================================
+     LOADING UI ANIMATION
+  ========================================================== */
+
+  function updateLoadingUI(
+    now
+  ) {
+
+    if (
+      !bootStarted ||
+      loadingCompleteReceived
+    ) {
+
+      return;
+
+    }
+
+
+    /*
+      Slowly activate nodes so the loader feels alive
+      without pretending that we know an actual percentage.
+    */
+
+    const elapsed =
+      now -
+      startTime;
+
+
+    const cycle =
+      (
+        elapsed /
+        900
+      ) %
+      signalNodes.length;
+
+
+    signalNodes.forEach(
+      (
+        node,
+        index
+      ) => {
+
+        const distance =
+          Math.abs(
+            index -
+            cycle
+          );
+
+
+        node.classList.toggle(
+          "active",
+          distance < 1.35
+        );
+
+      }
+    );
+
+
+    /*
+      The text gently changes to communicate that
+      we're waiting for the kernel rather than Earth.
+    */
+
+    const textCycle =
+      Math.floor(
+        elapsed / 2600
+      ) % 4;
+
+
+    const messages = [
+
+      "Waiting for MePlay kernel",
+
+      "Synchronizing world state",
+
+      "Awaiting boot command",
+
+      "Preparing MePlay Island"
+
+    ];
+
+
+    loadingSubtext.textContent =
+      messages[textCycle];
+
+  }
+
+
+  /* =========================================================
+     TIMEOUT SYSTEM
+  ========================================================== */
+
+  function updateTimeout(
+    now
+  ) {
+
+    if (
+      !bootStarted ||
+      loadingCompleteReceived ||
+      errorShown
+    ) {
+
+      return;
+
+    }
+
+
+    const elapsed =
+      now -
+      startTime;
+
+
+    /*
+      90 SECONDS
+    */
+
+    if (
+      elapsed >= 90000 &&
+      !warningShown
+    ) {
+
+      warningShown =
         true;
 
 
-      finished =
-        false;
-
-
-      startTime =
-        performance.now();
-
-
-      loadingInterface.classList.add(
-        "hidden"
+      warning.classList.add(
+        "show"
       );
 
 
-      camera.position.set(
-        0,
-        .25,
-        8
-      );
-
-
-      camera.setTarget(
-        BABYLON.Vector3.Zero()
-      );
-
-
-      earthRoot.scaling =
-        new BABYLON.Vector3(
-          .001,
-          .001,
-          .001
-        );
-
-
-      console.log(
-        "MEPLAY: Boot transition beginning."
+      console.warn(
+        "MEPLAY: 90 second boot warning."
       );
 
     }
 
 
-    /* ============================================================
-       TIMEOUT SYSTEM
-       ============================================================ */
-
-    function updateTimeout(
-      now
-    ) {
-
-      if (
-        bootCommandReceived
-      ) {
-
-        return;
-
-      }
-
-
-      const elapsed =
-        now -
-        timeoutStart;
-
-
-      /*
-      90 SECONDS
-      */
-
-      if (
-        elapsed >= 90000 &&
-        !warningShown
-      ) {
-
-        warningShown =
-          true;
-
-
-        timeoutWarning.classList.add(
-          "show"
-        );
-
-
-        loadingSubtitle.textContent =
-          "Still waiting for boot command";
-
-
-        console.warn(
-          "MEPLAY: Boot command has not arrived after 90 seconds."
-        );
-
-      }
-
-
-      /*
-      150 SECONDS TOTAL
-
+    /*
       90 seconds + another 60 seconds
-      */
+      = 150 seconds total.
+    */
 
-      if (
-        elapsed >= 150000 &&
-        !errorShown
-      ) {
+    if (
+      elapsed >= 150000 &&
+      !errorShown
+    ) {
 
-        errorShown =
-          true;
-
-
-        timeoutError.classList.add(
-          "show"
-        );
+      errorShown =
+        true;
 
 
-        timeoutWarning.classList.remove(
-          "show"
-        );
+      errorPanel.classList.add(
+        "show"
+      );
 
 
-        loadingSubtitle.textContent =
-          "Boot command timeout";
+      console.error(
+        "MEPLAY: BOOT TIMEOUT — MPLAY-BOOT-001"
+      );
+
+    }
+
+  }
 
 
-        console.error(
-          "MEPLAY: ERROR MP-BOOT-CMD-150"
-        );
+  /* =========================================================
+     BOOT UPDATE
+  ========================================================== */
 
-      }
+  function updateBoot(
+    now
+  ) {
+
+    if (
+      !bootStarted ||
+      finished
+    ) {
+
+      return;
 
     }
 
 
-    /* ============================================================
-       BOOT UPDATE
-       ============================================================ */
+    const elapsed =
+      now -
+      startTime;
 
-    function updateBoot(
-      now
+
+    /*
+      =========================================================
+      BEFORE LOADING-COMPLETE COMMAND
+
+      Earth appears and remains in the scene.
+
+      NOTHING performs the final zoom yet.
+      =========================================================
+    */
+
+
+    if (
+      !loadingCompleteReceived
     ) {
 
       /*
-      The loading interface remains visible until
-      the actual MePlay boot command arrives.
+        Earth appearance.
       */
-
-      if (
-        !started ||
-        finished
-      ) {
-
-        return;
-
-      }
-
-
-      const elapsed =
-        now -
-        startTime;
-
-
-      /* ==========================================================
-         EARTH APPEARS
-         ========================================================== */
 
       if (
         elapsed < 1000
@@ -2215,15 +2374,20 @@
 
         const t =
           clamp01(
-            elapsed / 1000
+            elapsed /
+            1000
           );
+
+
+        const e =
+          easeOutCubic(t);
 
 
         const scale =
           lerp(
-            .001,
+            0.001,
             1,
-            easeOutCubic(t)
+            e
           );
 
 
@@ -2234,238 +2398,297 @@
       }
 
 
-      /* ==========================================================
-         EARTH ROTATION
-         ========================================================== */
+      /*
+        Earth rotation.
+      */
 
       if (
         elapsed > 700
       ) {
 
         earthRoot.rotation.y +=
-          .00028;
+          0.00028;
 
       }
 
 
-      /* ==========================================================
-         FINAL ZOOM
-         ========================================================== */
-
-      if (
-        elapsed >= 1000
-      ) {
-
-        const t =
-          clamp01(
-            (elapsed - 1000) /
-            2200
-          );
-
-
-        const e =
-          easeInOutCubic(t);
-
-
-        const startDistance =
-          Math.max(
-            earthRadius * 4.8,
-            7
-          );
-
-
-        const endDistance =
-          Math.max(
-            earthRadius * 1.35,
-            1.9
-          );
-
-
-        camera.position.z =
-          lerp(
-            startDistance,
-            endDistance,
-            e
-          );
-
-
-        camera.position.y =
-          lerp(
-            .25,
-            .03,
-            e
-          );
-
-
-        camera.setTarget(
-          BABYLON.Vector3.Zero()
-        );
-
-
-        if (
-          t > .72
-        ) {
-
-          status.classList.add(
-            "show"
-          );
-
-        }
-
-
-        if (
-          t > .9
-        ) {
-
-          flash.style.opacity =
-            String(
-              smoothstep(
-                (t - .9) / .1
-              )
-            );
-
-        }
-
-
-        if (
-          t >= 1
-        ) {
-
-          finish();
-
-        }
-
-      }
+      return;
 
     }
 
 
-    /* ============================================================
-       FINISH
-       ============================================================ */
+    /*
+      =========================================================
+      COMMAND RECEIVED
 
-    function finish() {
-
-      if (
-        finished
-      ) {
-
-        return;
-
-      }
+      ONLY NOW does the final world-entry sequence begin.
+      =========================================================
+    */
 
 
-      finished =
-        true;
+    const commandElapsed =
+      now -
+      commandTime;
 
 
-      status.textContent =
-        "MePlay";
+    /*
+      Earth continues rotating.
+    */
 
+    earthRoot.rotation.y +=
+      0.00028;
+
+
+    /*
+      =========================================================
+      FINAL ZOOM
+      =========================================================
+    */
+
+    const t =
+      clamp01(
+        commandElapsed /
+        2200
+      );
+
+
+    const e =
+      easeInOutCubic(t);
+
+
+    /*
+      Camera moves toward Earth.
+    */
+
+    const startDistance =
+      Math.max(
+        earthRadius * 4.8,
+        7
+      );
+
+
+    const endDistance =
+      Math.max(
+        earthRadius * 1.35,
+        1.9
+      );
+
+
+    camera.position.z =
+      lerp(
+        startDistance,
+        endDistance,
+        e
+      );
+
+
+    camera.position.y =
+      lerp(
+        0.25,
+        0.03,
+        e
+      );
+
+
+    camera.setTarget(
+      BABYLON.Vector3.Zero()
+    );
+
+
+    /*
+      Hide loading interface during entry.
+    */
+
+    if (
+      commandElapsed > 300
+    ) {
+
+      loadingUI.classList.add(
+        "hidden"
+      );
+
+    }
+
+
+    /*
+      Status appears near the end.
+    */
+
+    if (
+      t > 0.72
+    ) {
 
       status.classList.add(
         "show"
       );
 
-
-      setTimeout(
-        () => {
-
-          flash.style.opacity =
-            "0";
+    }
 
 
-          status.classList.remove(
-            "show"
-          );
+    /*
+      White transition.
+    */
 
-        },
-        500
-      );
+    if (
+      t > 0.9
+    ) {
+
+      flash.style.opacity =
+        String(
+          smoothstep(
+            (t - 0.9) /
+            0.1
+          )
+        );
 
     }
 
 
-    /* ============================================================
-       RESIZE
-       ============================================================ */
+    /*
+      Finished.
+    */
 
-    function resize() {
+    if (
+      t >= 1
+    ) {
 
-      engine.resize();
+      finish();
+
+    }
+
+  }
+
+
+  /* =========================================================
+     FINISH
+  ========================================================== */
+
+  function finish() {
+
+    if (
+      finished
+    ) {
+
+      return;
 
     }
 
 
-    window.addEventListener(
-      "resize",
-      resize
+    finished =
+      true;
+
+
+    status.textContent =
+      "MePlay Island";
+
+
+    status.classList.add(
+      "show"
     );
 
 
-    window.addEventListener(
-      "orientationchange",
-      resize
-    );
-
-
-    /* ============================================================
-       RENDER LOOP
-       ============================================================ */
-
-    engine.runRenderLoop(
+    setTimeout(
       () => {
 
-        const now =
-          performance.now();
+        flash.style.opacity =
+          "0";
 
 
-        updateTimeout(
-          now
+        status.classList.remove(
+          "show"
         );
 
-
-        updateBoot(
-          now
-        );
-
-
-        stars.rotation.y +=
-          .00016;
-
-
-        stars.rotation.x +=
-          .000025;
-
-
-        scene.render();
-
-      }
-    );
-
-
-    /* ============================================================
-       INITIALIZE
-       ============================================================ */
-
-    resize();
-
-    loadEarth();
-
-
-    console.log(
-      "MEPLAY: Cosmic boot initialized."
+      },
+      500
     );
 
 
     console.log(
-      'MEPLAY: Waiting for meplay.boot.animation.command(loading-complete:"true")'
+      "MEPLAY: BOOT ANIMATION COMPLETE."
     );
 
+  }
 
-  })();
 
-  </script>
+  /* =========================================================
+     RESIZE
+  ========================================================== */
+
+  function resize() {
+
+    engine.resize();
+
+  }
+
+
+  window.addEventListener(
+    "resize",
+    resize
+  );
+
+
+  window.addEventListener(
+    "orientationchange",
+    resize
+  );
+
+
+  /* =========================================================
+     RENDER LOOP
+  ========================================================== */
+
+  engine.runRenderLoop(
+    () => {
+
+      const now =
+        performance.now();
+
+
+      updateLoadingUI(
+        now
+      );
+
+
+      updateTimeout(
+        now
+      );
+
+
+      updateBoot(
+        now
+      );
+
+
+      /*
+        Cosmic star movement remains exactly part of
+        the background.
+      */
+
+      stars.rotation.y +=
+        0.00016;
+
+      stars.rotation.x +=
+        0.000025;
+
+
+      scene.render();
+
+    }
+  );
+
+
+  /* =========================================================
+     INITIALIZE
+  ========================================================== */
+
+  resize();
+
+  loadEarth();
+
+
+})();
+
+</script>
 
 </body>
 </html>
