@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+
   <meta
     name="viewport"
     content="width=device-width,initial-scale=1,viewport-fit=cover"
@@ -9,102 +10,361 @@
 
   <title>MePlay — Cosmic Boot Animation</title>
 
-  <!-- Babylon.js -->
+  <!-- ============================================================
+       BABYLON.JS
+       ============================================================ -->
+
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
 
-  <!-- Babylon GLB/GLTF loader -->
   <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
 
+
   <style>
+
+    /* ============================================================
+       GLOBAL
+       ============================================================ */
+
     * {
       box-sizing: border-box;
     }
 
     html,
     body {
+
       width: 100%;
       height: 100%;
+
       margin: 0;
+
       overflow: hidden;
-      background: #020414;
+
+      background:
+        radial-gradient(
+          circle at center,
+          #08133d 0%,
+          #030822 38%,
+          #020414 72%,
+          #01020b 100%
+        );
+
       font-family:
         system-ui,
         -apple-system,
         BlinkMacSystemFont,
         "Segoe UI",
         sans-serif;
+
     }
 
-    #canvas {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
 
     /* ============================================================
-       LOADING UI
+       CANVAS
        ============================================================ */
 
-    #loadingUI {
+    #canvas {
+
+      position: fixed;
+
+      inset: 0;
+
+      width: 100%;
+      height: 100%;
+
+      display: block;
+
+    }
+
+
+    /* ============================================================
+       LOADING INTERFACE
+       ============================================================ */
+
+    #loadingInterface {
+
       position: fixed;
 
       left: 50%;
-      bottom: max(28px, env(safe-area-inset-bottom));
+      bottom: 7.5vh;
 
       transform: translateX(-50%);
 
-      width: min(360px, calc(100vw - 48px));
+      width: min(680px, 82vw);
 
-      z-index: 50;
-
-      pointer-events: none;
-
-      opacity: 1;
-
-      transition:
-        opacity .6s ease;
-    }
-
-    #loadingUI.hidden {
-      opacity: 0;
-    }
-
-    #loadingText {
-      margin-bottom: 9px;
-
-      color: rgba(255,255,255,.9);
-
-      font-size: 11px;
-      font-weight: 600;
-
-      letter-spacing: .18em;
-
-      text-transform: uppercase;
+      z-index: 20;
 
       text-align: center;
 
-      text-shadow:
-        0 0 10px rgba(130,160,255,.9),
-        0 0 24px rgba(90,100,255,.5);
+      pointer-events: none;
+
+      transition:
+        opacity 0.8s ease,
+        transform 0.8s ease;
+
     }
 
-    #loadingBarOuter {
+
+    #loadingInterface.hidden {
+
+      opacity: 0;
+
+      transform:
+        translateX(-50%)
+        translateY(25px);
+
+    }
+
+
+    /* ============================================================
+       LOADING TITLE
+       ============================================================ */
+
+    #loadingTitle {
+
+      margin-bottom: 18px;
+
+      color:
+        rgba(255,255,255,.96);
+
+      font-size:
+        clamp(15px, 1.5vw, 20px);
+
+      font-weight: 600;
+
+      letter-spacing:
+        .22em;
+
+      text-transform:
+        uppercase;
+
+      text-shadow:
+        0 0 12px rgba(110,170,255,.8),
+        0 0 35px rgba(90,110,255,.45);
+
+    }
+
+
+    #loadingSubtext {
+
+      margin-top: 15px;
+
+      color:
+        rgba(205,220,255,.65);
+
+      font-size:
+        clamp(10px, 1vw, 13px);
+
+      letter-spacing:
+        .16em;
+
+      text-transform:
+        uppercase;
+
+    }
+
+
+    /* ============================================================
+       UNIQUE LOADING BAR
+       ============================================================ */
+
+    #loadingTrack {
+
+      position: relative;
+
       width: 100%;
-      height: 4px;
+
+      height: 32px;
 
       border-radius: 999px;
 
-      background: rgba(255,255,255,.12);
+      overflow: hidden;
+
+      background:
+        rgba(255,255,255,.035);
+
+      border:
+        1px solid
+        rgba(150,190,255,.25);
+
+      box-shadow:
+
+        inset
+        0 0 25px
+        rgba(40,80,180,.18),
+
+        0 0 25px
+        rgba(70,110,255,.12);
+
+    }
+
+
+    /*
+    The actual loading energy.
+    */
+
+    #loadingEnergy {
+
+      position: absolute;
+
+      left: 4px;
+      top: 4px;
+
+      width: calc(100% - 8px);
+      height: calc(100% - 8px);
+
+      border-radius: 999px;
 
       overflow: hidden;
 
-      box-shadow:
-        0 0 12px rgba(100,120,255,.15);
     }
 
-    #loadingBar {
+
+    #loadingEnergyCore {
+
+      position: absolute;
+
+      left: -35%;
+
+      top: 0;
+
+      width: 35%;
+
+      height: 100%;
+
+      border-radius: 999px;
+
+      background:
+        linear-gradient(
+          90deg,
+          transparent,
+          rgba(100,180,255,.12),
+          rgba(220,240,255,.95),
+          rgba(120,170,255,.8),
+          transparent
+        );
+
+      filter:
+        blur(1px);
+
+      box-shadow:
+        0 0 15px rgba(130,190,255,.9),
+        0 0 35px rgba(90,130,255,.7);
+
+      animation:
+        cosmicTravel
+        2.4s
+        cubic-bezier(.45,0,.55,1)
+        infinite;
+
+    }
+
+
+    /*
+    Secondary moving streak.
+    */
+
+    #loadingEnergyTrail {
+
+      position: absolute;
+
+      left: -50%;
+
+      top: 3px;
+
+      width: 50%;
+
+      height: calc(100% - 6px);
+
+      border-radius: 999px;
+
+      background:
+        linear-gradient(
+          90deg,
+          transparent,
+          rgba(130,160,255,.08),
+          rgba(190,210,255,.4),
+          transparent
+        );
+
+      animation:
+        cosmicTrail
+        3.5s
+        linear
+        infinite;
+
+    }
+
+
+    @keyframes cosmicTravel {
+
+      0% {
+
+        transform:
+          translateX(0);
+
+        opacity:
+          .2;
+
+      }
+
+      15% {
+
+        opacity:
+          1;
+
+      }
+
+      85% {
+
+        opacity:
+          1;
+
+      }
+
+      100% {
+
+        transform:
+          translateX(385%);
+
+        opacity:
+          .15;
+
+      }
+
+    }
+
+
+    @keyframes cosmicTrail {
+
+      0% {
+
+        transform:
+          translateX(0);
+
+      }
+
+      100% {
+
+        transform:
+          translateX(300%);
+
+      }
+
+    }
+
+
+    /*
+    When the command arrives, the loader becomes complete.
+    */
+
+    #loadingComplete {
+
+      position: absolute;
+
+      left: 0;
+
+      top: 0;
+
       width: 0%;
 
       height: 100%;
@@ -114,29 +374,221 @@
       background:
         linear-gradient(
           90deg,
-          rgba(115,85,255,.9),
-          rgba(150,190,255,1),
+          rgba(90,130,255,.65),
+          rgba(180,220,255,.95),
           rgba(255,255,255,1)
         );
 
       box-shadow:
-        0 0 8px rgba(140,170,255,.9),
-        0 0 20px rgba(100,100,255,.55);
+        0 0 15px rgba(130,190,255,.9),
+        0 0 35px rgba(90,130,255,.7);
 
       transition:
-        width .25s ease;
+        width 1.2s cubic-bezier(.2,.8,.2,1);
+
     }
 
+
+    /*
+    Tiny stars travel through the loading track.
+    */
+
+    .loadingStar {
+
+      position: absolute;
+
+      width: 4px;
+      height: 4px;
+
+      border-radius: 50%;
+
+      background:
+        white;
+
+      box-shadow:
+        0 0 6px white,
+        0 0 12px rgba(130,180,255,.9);
+
+      opacity: .8;
+
+      animation:
+        loadingStarTravel
+        var(--duration)
+        linear
+        infinite;
+
+      animation-delay:
+        var(--delay);
+
+    }
+
+
+    @keyframes loadingStarTravel {
+
+      from {
+
+        transform:
+          translateX(-20px);
+
+      }
+
+      to {
+
+        transform:
+          translateX(700px);
+
+      }
+
+    }
+
+
+    /* ============================================================
+       LOADING STATUS
+       ============================================================ */
+
+    #loadingStatus {
+
+      margin-top: 12px;
+
+      min-height: 20px;
+
+      color:
+        rgba(220,230,255,.78);
+
+      font-size:
+        11px;
+
+      letter-spacing:
+        .18em;
+
+      text-transform:
+        uppercase;
+
+    }
+
+
     #loadingPercent {
-      margin-top: 7px;
 
-      color: rgba(255,255,255,.48);
+      display: inline-block;
 
-      font-size: 9px;
+      margin-left: 8px;
 
-      letter-spacing: .12em;
+      color:
+        rgba(255,255,255,.95);
 
-      text-align: center;
+      font-variant-numeric:
+        tabular-nums;
+
+    }
+
+
+    /* ============================================================
+       90 SECOND WARNING
+       ============================================================ */
+
+    #warning {
+
+      position: fixed;
+
+      top: max(22px, env(safe-area-inset-top));
+      right: max(22px, env(safe-area-inset-right));
+
+      width:
+        min(390px, calc(100vw - 44px));
+
+      padding:
+        18px 20px;
+
+      z-index: 50;
+
+      border-radius:
+        16px;
+
+      background:
+        rgba(8,14,38,.88);
+
+      border:
+        1px solid
+        rgba(150,190,255,.28);
+
+      box-shadow:
+
+        0 12px 50px
+        rgba(0,0,0,.4),
+
+        0 0 35px
+        rgba(80,120,255,.12),
+
+        inset 0 0 30px
+        rgba(70,100,200,.08);
+
+      backdrop-filter:
+        blur(18px);
+
+      -webkit-backdrop-filter:
+        blur(18px);
+
+      opacity:
+        0;
+
+      transform:
+        translateX(30px);
+
+      pointer-events:
+        none;
+
+      transition:
+        opacity .5s ease,
+        transform .5s ease;
+
+    }
+
+
+    #warning.show {
+
+      opacity:
+        1;
+
+      transform:
+        translateX(0);
+
+    }
+
+
+    #warningTitle {
+
+      color:
+        white;
+
+      font-size:
+        13px;
+
+      font-weight:
+        700;
+
+      letter-spacing:
+        .12em;
+
+      text-transform:
+        uppercase;
+
+      margin-bottom:
+        9px;
+
+    }
+
+
+    #warningText {
+
+      color:
+        rgba(225,232,255,.75);
+
+      font-size:
+        12px;
+
+      line-height:
+        1.6;
+
     }
 
 
@@ -145,120 +597,59 @@
        ============================================================ */
 
     #status {
+
       position: fixed;
 
       left: 50%;
 
-      bottom: max(92px, calc(env(safe-area-inset-bottom) + 92px));
+      bottom:
+        max(22px, env(safe-area-inset-bottom));
 
-      transform: translateX(-50%);
+      transform:
+        translateX(-50%);
 
-      z-index: 40;
+      z-index:
+        20;
 
-      color: rgba(255,255,255,.9);
+      color:
+        rgba(255,255,255,.9);
 
-      font-size: 12px;
-      font-weight: 500;
+      font-size:
+        12px;
 
-      letter-spacing: .2em;
+      font-weight:
+        500;
 
-      text-transform: uppercase;
+      letter-spacing:
+        .2em;
 
-      opacity: 0;
+      text-transform:
+        uppercase;
+
+      opacity:
+        0;
 
       transition:
         opacity .45s ease;
 
-      pointer-events: none;
+      pointer-events:
+        none;
 
-      white-space: nowrap;
+      white-space:
+        nowrap;
 
       text-shadow:
         0 0 10px rgba(120,160,255,.9),
         0 0 30px rgba(90,100,255,.5);
+
     }
+
 
     #status.show {
-      opacity: 1;
-    }
 
+      opacity:
+        1;
 
-    /* ============================================================
-       LOADING WARNING
-       ============================================================ */
-
-    #timeoutWarning {
-      position: fixed;
-
-      top: max(18px, env(safe-area-inset-top) + 18px);
-
-      right: 18px;
-
-      width: min(360px, calc(100vw - 36px));
-
-      z-index: 100;
-
-      padding: 15px 17px;
-
-      border-radius: 12px;
-
-      background:
-        rgba(18, 18, 35, .88);
-
-      border:
-        1px solid rgba(255,255,255,.18);
-
-      box-shadow:
-        0 10px 35px rgba(0,0,0,.35),
-        0 0 25px rgba(110,100,255,.18);
-
-      backdrop-filter:
-        blur(14px);
-
-      -webkit-backdrop-filter:
-        blur(14px);
-
-      color: rgba(255,255,255,.9);
-
-      font-size: 12px;
-
-      line-height: 1.5;
-
-      opacity: 0;
-
-      transform:
-        translateY(-12px);
-
-      pointer-events: none;
-
-      transition:
-        opacity .4s ease,
-        transform .4s ease;
-    }
-
-    #timeoutWarning.show {
-      opacity: 1;
-
-      transform:
-        translateY(0);
-    }
-
-    #timeoutWarningTitle {
-      margin-bottom: 5px;
-
-      font-size: 12px;
-
-      font-weight: 700;
-
-      letter-spacing: .08em;
-
-      text-transform: uppercase;
-
-      color: white;
-    }
-
-    #timeoutWarningText {
-      color: rgba(255,255,255,.68);
     }
 
 
@@ -267,42 +658,112 @@
        ============================================================ */
 
     #flash {
+
       position: fixed;
 
       inset: 0;
 
-      z-index: 80;
+      z-index: 30;
 
-      background: white;
+      background:
+        white;
 
-      opacity: 0;
+      opacity:
+        0;
 
-      pointer-events: none;
+      pointer-events:
+        none;
+
     }
+
   </style>
+
 </head>
 
+
 <body>
+
 
 <canvas id="canvas"></canvas>
 
 
-<!-- ============================================================
-     LOADING UI
-     ============================================================ -->
+<!-- ==============================================================
+     LOADING INTERFACE
+     ============================================================== -->
 
-<div id="loadingUI">
+<div id="loadingInterface">
 
-  <div id="loadingText">
-    Initializing MePlay
+  <div id="loadingTitle">
+    Preparing MePlay
   </div>
 
-  <div id="loadingBarOuter">
-    <div id="loadingBar"></div>
+
+  <div id="loadingTrack">
+
+    <div id="loadingEnergy">
+
+      <div id="loadingEnergyTrail"></div>
+
+      <div id="loadingEnergyCore"></div>
+
+      <div id="loadingComplete"></div>
+
+      <div
+        class="loadingStar"
+        style="--duration:2.2s;--delay:-.4s"
+      ></div>
+
+      <div
+        class="loadingStar"
+        style="--duration:3.1s;--delay:-1.7s"
+      ></div>
+
+      <div
+        class="loadingStar"
+        style="--duration:2.7s;--delay:-2.3s"
+      ></div>
+
+      <div
+        class="loadingStar"
+        style="--duration:4s;--delay:-3s"
+      ></div>
+
+    </div>
+
   </div>
 
-  <div id="loadingPercent">
-    0%
+
+  <div id="loadingStatus">
+
+    Connecting to your world
+
+    <span id="loadingPercent">
+      0%
+    </span>
+
+  </div>
+
+
+  <div id="loadingSubtext">
+    Waiting for MePlay Island
+  </div>
+
+</div>
+
+
+<!-- ==============================================================
+     90 SECOND WARNING
+     ============================================================== -->
+
+<div id="warning">
+
+  <div id="warningTitle">
+    MePlay is taking longer than usual
+  </div>
+
+  <div id="warningText">
+    Try rebooting. If the problem persists, wait another
+    1 minute for an error code to appear, then contact support.
   </div>
 
 </div>
@@ -313,32 +774,46 @@
 </div>
 
 
-<!-- ============================================================
-     TIMEOUT WARNING
-     ============================================================ -->
-
-<div id="timeoutWarning">
-
-  <div id="timeoutWarningTitle">
-    MePlay is taking longer than usual
-  </div>
-
-  <div id="timeoutWarningText">
-    It's taking longer than usual to load. Try rebooting too,
-    or if the problem persists, wait an extra 1 minute for an
-    error code to appear, then contact support.
-  </div>
-
-</div>
-
-
 <div id="flash"></div>
 
 
 <script>
+
 (() => {
 
   "use strict";
+
+
+  /*
+  ==================================================================
+  MEPLAY COSMIC BOOT
+  ==================================================================
+
+  BOOT FLOW:
+
+      1. Earth loads independently.
+      2. Earth appears.
+      3. Loading interface waits for the MePlay Island system.
+      4. The loading animation remains active.
+      5. After 90 seconds WITHOUT the completion command,
+         the warning appears.
+      6. The warning does NOT mean the Earth failed to load.
+      7. The warning does NOT start the boot.
+      8. The warning does NOT finish the boot.
+      9. The ONLY thing that starts the final zoom is:
+
+         meplay.boot.animation.command(loading-complete:"true")
+
+     10. Once that command is received:
+         loading becomes 100%
+         loading interface disappears
+         camera zoom begins
+         screen becomes white
+         boot animation finishes
+         MePlay Island can take over.
+
+  ==================================================================
+  */
 
 
   /* ================================================================
@@ -348,26 +823,53 @@
   const canvas =
     document.getElementById("canvas");
 
-  const loadingUI =
-    document.getElementById("loadingUI");
 
-  const loadingText =
-    document.getElementById("loadingText");
+  const loadingInterface =
+    document.getElementById(
+      "loadingInterface"
+    );
 
-  const loadingBar =
-    document.getElementById("loadingBar");
+
+  const loadingComplete =
+    document.getElementById(
+      "loadingComplete"
+    );
+
 
   const loadingPercent =
-    document.getElementById("loadingPercent");
+    document.getElementById(
+      "loadingPercent"
+    );
+
+
+  const loadingStatus =
+    document.getElementById(
+      "loadingStatus"
+    );
+
+
+  const loadingSubtext =
+    document.getElementById(
+      "loadingSubtext"
+    );
+
+
+  const warning =
+    document.getElementById(
+      "warning"
+    );
+
 
   const status =
-    document.getElementById("status");
+    document.getElementById(
+      "status"
+    );
 
-  const timeoutWarning =
-    document.getElementById("timeoutWarning");
 
   const flash =
-    document.getElementById("flash");
+    document.getElementById(
+      "flash"
+    );
 
 
   /* ================================================================
@@ -392,7 +894,10 @@
      ================================================================ */
 
   const scene =
-    new BABYLON.Scene(engine);
+    new BABYLON.Scene(
+      engine
+    );
+
 
   scene.clearColor =
     new BABYLON.Color4(
@@ -412,20 +917,24 @@
       "camera",
       new BABYLON.Vector3(
         0,
-        0,
-        10
+        0.25,
+        8
       ),
       scene
     );
 
+
   camera.fov =
     0.72;
+
 
   camera.minZ =
     0.05;
 
+
   camera.maxZ =
     5000;
+
 
   camera.setTarget(
     BABYLON.Vector3.Zero()
@@ -447,8 +956,10 @@
       scene
     );
 
+
   sun.intensity =
     1.35;
+
 
   sun.diffuse =
     new BABYLON.Color3(
@@ -469,8 +980,10 @@
       scene
     );
 
+
   hemi.intensity =
     0.6;
+
 
   hemi.diffuse =
     new BABYLON.Color3(
@@ -478,6 +991,7 @@
       0.78,
       1
     );
+
 
   hemi.groundColor =
     new BABYLON.Color3(
@@ -498,8 +1012,10 @@
       scene
     );
 
+
   rim.intensity =
     18;
+
 
   rim.diffuse =
     new BABYLON.Color3(
@@ -516,8 +1032,10 @@
   const STAR_COUNT =
     1800;
 
+
   const starPositions =
     [];
+
 
   const starColors =
     [];
@@ -533,14 +1051,18 @@
       35 +
       Math.random() * 130;
 
+
     const theta =
       Math.random() *
       Math.PI *
       2;
 
+
     const phi =
       Math.acos(
-        2 * Math.random() - 1
+        2 *
+        Math.random() -
+        1
       );
 
 
@@ -613,6 +1135,7 @@
   starData.positions =
     starPositions;
 
+
   starData.colors =
     starColors;
 
@@ -633,11 +1156,14 @@
   starMaterial.pointsCloud =
     true;
 
+
   starMaterial.pointSize =
     2;
 
+
   starMaterial.disableLighting =
     true;
+
 
   starMaterial.emissiveColor =
     new BABYLON.Color3(
@@ -645,6 +1171,7 @@
       1,
       1
     );
+
 
   starMaterial.alpha =
     0.9;
@@ -668,8 +1195,10 @@
   earthRoot.position =
     BABYLON.Vector3.Zero();
 
+
   earthRoot.rotation =
     BABYLON.Vector3.Zero();
+
 
   earthRoot.scaling =
     new BABYLON.Vector3(
@@ -682,8 +1211,10 @@
   let earthMeshes =
     [];
 
+
   let earthReady =
     false;
+
 
   let earthRadius =
     1.4;
@@ -763,8 +1294,10 @@
       earthRoot.position =
         BABYLON.Vector3.Zero();
 
+
       earthRoot.rotation =
         BABYLON.Vector3.Zero();
+
 
       earthRoot.scaling =
         BABYLON.Vector3.One();
@@ -807,6 +1340,7 @@
 
           const bounding =
             mesh.getBoundingInfo();
+
 
           if (
             !bounding
@@ -924,30 +1458,22 @@
 
       /*
       --------------------------------------------------------------
-      EARTH IS READY.
+      IMPORTANT:
 
-      This does NOT trigger the timeout warning.
+      Earth being ready does NOT complete boot.
 
-      This does NOT mean the entire MePlay boot is complete.
-
-      The boot completion command is responsible for that.
+      The loading interface continues waiting for the
+      MePlay Island/kernel command.
       --------------------------------------------------------------
       */
 
-      startBoot();
+      beginBootWaiting();
+
 
     }
     catch (
       error
     ) {
-
-      /*
-      --------------------------------------------------------------
-      Earth loading failure is logged only.
-
-      We do not use this as the 1:30 timeout condition.
-      --------------------------------------------------------------
-      */
 
       console.error(
         "MEPLAY EARTH LOAD ERROR:",
@@ -955,10 +1481,21 @@
       );
 
 
+      /*
+      --------------------------------------------------------------
+      The Earth must still appear so the boot animation can
+      continue.
+
+      This fallback is ONLY for the Earth itself.
+
+      It has NOTHING to do with the 90-second warning.
+      --------------------------------------------------------------
+      */
+
       createFallbackEarth();
 
 
-      startBoot();
+      beginBootWaiting();
 
     }
 
@@ -1045,643 +1582,50 @@
 
 
   /* ================================================================
-     MP LOGO
-     ================================================================ */
-
-  const logoRoot =
-    new BABYLON.TransformNode(
-      "logoRoot",
-      scene
-    );
-
-
-  logoRoot.position =
-    new BABYLON.Vector3(
-      0,
-      0.02,
-      1.4
-    );
-
-
-  logoRoot.scaling =
-    new BABYLON.Vector3(
-      0.001,
-      0.001,
-      0.001
-    );
-
-
-  /* ================================================================
-     M
-     ================================================================ */
-
-  function createM() {
-
-    const root =
-      new BABYLON.TransformNode(
-        "M",
-        scene
-      );
-
-
-    const material =
-      new BABYLON.StandardMaterial(
-        "MMaterial",
-        scene
-      );
-
-
-    material.diffuseColor =
-      new BABYLON.Color3(
-        1,
-        0.72,
-        0.03
-      );
-
-
-    material.emissiveColor =
-      new BABYLON.Color3(
-        0.18,
-        0.07,
-        0.005
-      );
-
-
-    const pieces = [
-
-      {
-        x: -0.38,
-        y: 0,
-        w: 0.20,
-        h: 0.72,
-        r: -0.16
-      },
-
-      {
-        x: 0.38,
-        y: 0,
-        w: 0.20,
-        h: 0.72,
-        r: 0.16
-      },
-
-      {
-        x: -0.10,
-        y: 0.18,
-        w: 0.18,
-        h: 0.48,
-        r: 0.58
-      },
-
-      {
-        x: 0.10,
-        y: 0.18,
-        w: 0.18,
-        h: 0.48,
-        r: -0.58
-      }
-
-    ];
-
-
-    pieces.forEach(
-      (piece, index) => {
-
-        const box =
-          BABYLON.MeshBuilder.CreateBox(
-            "M" + index,
-            {
-              width: piece.w,
-              height: piece.h,
-              depth: 0.16
-            },
-            scene
-          );
-
-
-        box.material =
-          material;
-
-
-        box.position.set(
-          piece.x,
-          piece.y,
-          0
-        );
-
-
-        box.rotation.z =
-          piece.r;
-
-
-        box.parent =
-          root;
-
-
-        box.renderingGroupId =
-          4;
-
-      }
-    );
-
-
-    return root;
-
-  }
-
-
-  /* ================================================================
-     P
-     ================================================================ */
-
-  function createP() {
-
-    const root =
-      new BABYLON.TransformNode(
-        "P",
-        scene
-      );
-
-
-    const material =
-      new BABYLON.StandardMaterial(
-        "PMaterial",
-        scene
-      );
-
-
-    material.diffuseColor =
-      new BABYLON.Color3(
-        0.03,
-        0.55,
-        1
-      );
-
-
-    material.emissiveColor =
-      new BABYLON.Color3(
-        0.005,
-        0.08,
-        0.2
-      );
-
-
-    const stem =
-      BABYLON.MeshBuilder.CreateBox(
-        "PStem",
-        {
-          width: 0.20,
-          height: 1.35,
-          depth: 0.17
-        },
-        scene
-      );
-
-
-    stem.material =
-      material;
-
-
-    stem.position.x =
-      -0.30;
-
-
-    stem.parent =
-      root;
-
-
-    stem.renderingGroupId =
-      4;
-
-
-    const top =
-      BABYLON.MeshBuilder.CreateTorus(
-        "PTop",
-        {
-          diameter: 0.60,
-          thickness: 0.18,
-          tessellation: 32
-        },
-        scene
-      );
-
-
-    top.material =
-      material;
-
-
-    top.rotation.x =
-      Math.PI / 2;
-
-
-    top.position.set(
-      -0.02,
-      0.31,
-      0
-    );
-
-
-    top.parent =
-      root;
-
-
-    top.renderingGroupId =
-      4;
-
-
-    const cut =
-      BABYLON.MeshBuilder.CreateBox(
-        "PCut",
-        {
-          width: 0.35,
-          height: 0.32,
-          depth: 0.30
-        },
-        scene
-      );
-
-
-    cut.material =
-      material;
-
-
-    cut.position.set(
-      0.05,
-      0.05,
-      0
-    );
-
-
-    cut.parent =
-      root;
-
-
-    cut.renderingGroupId =
-      4;
-
-
-    return root;
-
-  }
-
-
-  const M =
-    createM();
-
-  const P =
-    createP();
-
-
-  M.parent =
-    logoRoot;
-
-  P.parent =
-    logoRoot;
-
-
-  M.position.x =
-    -0.53;
-
-  P.position.x =
-    0.53;
-
-
-  /* ================================================================
-     LOGO RING
-     ================================================================ */
-
-  const logoRing =
-    BABYLON.MeshBuilder.CreateTorus(
-      "logoRing",
-      {
-        diameter: 2.25,
-        thickness: 0.035,
-        tessellation: 96
-      },
-      scene
-    );
-
-
-  const ringMaterial =
-    new BABYLON.StandardMaterial(
-      "ringMaterial",
-      scene
-    );
-
-
-  ringMaterial.diffuseColor =
-    new BABYLON.Color3(
-      0.4,
-      0.1,
-      0.8
-    );
-
-
-  ringMaterial.emissiveColor =
-    new BABYLON.Color3(
-      0.55,
-      0.2,
-      1
-    );
-
-
-  ringMaterial.alpha =
-    0.65;
-
-
-  logoRing.material =
-    ringMaterial;
-
-
-  logoRing.parent =
-    logoRoot;
-
-
-  logoRing.rotation.x =
-    Math.PI / 2;
-
-
-  logoRing.position.z =
-    -0.03;
-
-
-  logoRing.renderingGroupId =
-    4;
-
-
-  /* ================================================================
-     MAGIC PARTICLES
-     ================================================================ */
-
-  const magicCount =
-    300;
-
-
-  const magicPositions =
-    [];
-
-
-  for (
-    let i = 0;
-    i < magicCount;
-    i++
-  ) {
-
-    const radius =
-      1.5 +
-      Math.random() * 3;
-
-
-    const angle =
-      Math.random() *
-      Math.PI *
-      2;
-
-
-    magicPositions.push(
-
-      Math.cos(angle) *
-      radius,
-
-      (Math.random() - 0.5) *
-      3,
-
-      Math.sin(angle) *
-      radius
-
-    );
-
-  }
-
-
-  const magicMesh =
-    new BABYLON.Mesh(
-      "magic",
-      scene
-    );
-
-
-  const magicData =
-    new BABYLON.VertexData();
-
-
-  magicData.positions =
-    magicPositions;
-
-
-  magicData.applyToMesh(
-    magicMesh,
-    true
-  );
-
-
-  const magicMaterial =
-    new BABYLON.StandardMaterial(
-      "magicMaterial",
-      scene
-    );
-
-
-  magicMaterial.pointsCloud =
-    true;
-
-  magicMaterial.pointSize =
-    3;
-
-  magicMaterial.disableLighting =
-    true;
-
-  magicMaterial.emissiveColor =
-    new BABYLON.Color3(
-      0.7,
-      0.25,
-      1
-    );
-
-  magicMaterial.alpha =
-    0;
-
-
-  magicMesh.material =
-    magicMaterial;
-
-
-  magicMesh.renderingGroupId =
-    5;
-
-
-  /* ================================================================
-     EASING
-     ================================================================ */
-
-  function clamp01(value) {
-
-    return Math.max(
-      0,
-      Math.min(
-        1,
-        value
-      )
-    );
-
-  }
-
-
-  function lerp(
-    a,
-    b,
-    t
-  ) {
-
-    return a +
-      (b - a) *
-      t;
-
-  }
-
-
-  function easeOutCubic(t) {
-
-    t =
-      clamp01(t);
-
-    return 1 -
-      Math.pow(
-        1 - t,
-        3
-      );
-
-  }
-
-
-  function easeInOutCubic(t) {
-
-    t =
-      clamp01(t);
-
-    return t < 0.5
-
-      ? 4 *
-        t *
-        t *
-        t
-
-      : 1 -
-        Math.pow(
-          -2 * t + 2,
-          3
-        ) / 2;
-
-  }
-
-
-  function smoothstep(t) {
-
-    t =
-      clamp01(t);
-
-    return t *
-      t *
-      (3 - 2 * t);
-
-  }
-
-
-  /* ================================================================
      BOOT STATE
      ================================================================ */
 
-  let started =
+  let bootWaiting =
     false;
+
+
+  let loadingCompleteReceived =
+    false;
+
 
   let finished =
     false;
 
-  let bootCompletionReceived =
-    false;
-
-  let finalTransitionStarted =
-    false;
 
   let startTime =
     0;
+
+
+  let commandReceivedTime =
+    0;
+
 
   let warningShown =
     false;
 
 
-  /* ================================================================
-     LOADING UI
-     ================================================================ */
+  /*
+  This timer is ONLY for the Island/kernel command.
+  It does not monitor Earth loading.
+  */
 
-  function setLoading(
-    percent,
-    text
-  ) {
-
-    percent =
-      Math.max(
-        0,
-        Math.min(
-          100,
-          percent
-        )
-      );
-
-
-    loadingBar.style.width =
-      percent + "%";
-
-
-    loadingPercent.textContent =
-      Math.round(percent) + "%";
-
-
-    if (
-      text
-    ) {
-
-      loadingText.textContent =
-        text;
-
-    }
-
-  }
+  let warningTimer =
+    null;
 
 
   /* ================================================================
-     BOOT COMPLETION COMMAND
-     ================================================================
-
-     The MePlay kernel / island system can send the completion
-     command using postMessage.
-
-     Accepted forms include:
-
-       meplay.boot.animation.command(loading-complete:"true")
-
-     or an object containing:
-
-       command:
-       type:
-       event:
-
-     with the same command string.
-
-     This command is NOT related to Earth loading.
-
-     It tells the boot animation:
-
-       "The MePlay Island is ready.
-        Begin the final zoom and white transition."
+     START WAITING
      ================================================================ */
 
-  function receiveBootCommand(
-    command
-  ) {
+  function beginBootWaiting() {
 
     if (
-      typeof command !== "string"
+      bootWaiting
     ) {
 
       return;
@@ -1689,266 +1633,17 @@
     }
 
 
-    const normalized =
-      command
-        .trim()
-        .toLowerCase();
-
-
-    if (
-      normalized ===
-      'meplay.boot.animation.command(loading-complete:"true")'
-    ) {
-
-      if (
-        bootCompletionReceived
-      ) {
-
-        return;
-
-      }
-
-
-      bootCompletionReceived =
-        true;
-
-
-      console.log(
-        "MEPLAY: Boot completion command received."
-      );
-
-
-      setLoading(
-        100,
-        "Loading complete"
-      );
-
-
-      /*
-      Give the UI a tiny moment to show 100%
-      before beginning the final transition.
-      */
-
-      setTimeout(
-        () => {
-
-          beginFinalTransition();
-
-        },
-        350
-      );
-
-    }
-
-  }
-
-
-  /* ================================================================
-     POSTMESSAGE COMMAND LISTENER
-     ================================================================ */
-
-  window.addEventListener(
-    "message",
-    event => {
-
-      const data =
-        event.data;
-
-
-      if (
-        typeof data === "string"
-      ) {
-
-        receiveBootCommand(
-          data
-        );
-
-        return;
-
-      }
-
-
-      if (
-        data &&
-        typeof data === "object"
-      ) {
-
-        if (
-          typeof data.command === "string"
-        ) {
-
-          receiveBootCommand(
-            data.command
-          );
-
-        }
-
-
-        if (
-          typeof data.type === "string"
-        ) {
-
-          receiveBootCommand(
-            data.type
-          );
-
-        }
-
-
-        if (
-          typeof data.event === "string"
-        ) {
-
-          receiveBootCommand(
-            data.event
-          );
-
-        }
-
-      }
-
-    }
-  );
-
-
-  /* ================================================================
-     CUSTOM EVENT COMMAND LISTENER
-     ================================================================ */
-
-  window.addEventListener(
-    "meplay.boot.animation.command",
-    event => {
-
-      if (
-        event.detail &&
-        typeof event.detail === "object" &&
-        typeof event.detail.command === "string"
-      ) {
-
-        receiveBootCommand(
-          event.detail.command
-        );
-
-      }
-      else if (
-        typeof event.detail === "string"
-      ) {
-
-        receiveBootCommand(
-          event.detail
-        );
-
-      }
-
-    }
-  );
-
-
-  /* ================================================================
-     1:30 TIMEOUT WARNING
-     ================================================================
-
-     IMPORTANT:
-
-     This timer is ONLY checking whether the boot completion
-     command has arrived.
-
-     It does NOT check:
-
-       • Earth loading
-       • GLB loading
-       • Babylon loading
-       • graphics
-       • internet connection
-
-     The Earth can already be fully loaded and this warning
-     can still appear if the kernel has not sent the completion
-     command.
-     ================================================================ */
-
-  function startTimeoutTimer() {
-
-    setTimeout(
-      () => {
-
-        if (
-          bootCompletionReceived ||
-          warningShown ||
-          finished
-        ) {
-
-          return;
-
-        }
-
-
-        warningShown =
-          true;
-
-
-        timeoutWarning.classList.add(
-          "show"
-        );
-
-
-        console.warn(
-          "MEPLAY: Boot completion command has not been received after 90 seconds."
-        );
-
-      },
-      90000
-    );
-
-  }
-
-
-  /* ================================================================
-     START BOOT
-     ================================================================ */
-
-  function startBoot() {
-
-    if (
-      started
-    ) {
-
-      return;
-
-    }
-
-
-    if (
-      !earthReady
-    ) {
-
-      return;
-
-    }
-
-
-    started =
+    bootWaiting =
       true;
-
-
-    finished =
-      false;
 
 
     startTime =
       performance.now();
 
 
-    camera.position.set(
-      0,
-      0.25,
-      8
-    );
-
-
-    camera.setTarget(
-      BABYLON.Vector3.Zero()
-    );
-
+    /*
+    Earth starts tiny and grows into view.
+    */
 
     earthRoot.scaling =
       new BABYLON.Vector3(
@@ -1958,25 +1653,332 @@
       );
 
 
-    setLoading(
-      0,
-      "Initializing MePlay"
-    );
+    /*
+    The waiting period starts immediately.
+    */
 
+    warningTimer =
+      setTimeout(
+        () => {
 
-    startTimeoutTimer();
+          if (
+            !loadingCompleteReceived
+          ) {
+
+            showWarning();
+
+          }
+
+        },
+        90000
+      );
 
   }
 
 
   /* ================================================================
-     FINAL TRANSITION
+     WARNING
      ================================================================ */
 
-  function beginFinalTransition() {
+  function showWarning() {
 
     if (
-      finalTransitionStarted ||
+      warningShown ||
+      loadingCompleteReceived
+    ) {
+
+      return;
+
+    }
+
+
+    warningShown =
+      true;
+
+
+    warning.classList.add(
+      "show"
+    );
+
+
+    console.warn(
+      "MEPLAY: Island loading command has not arrived after 90 seconds."
+    );
+
+  }
+
+
+  /* ================================================================
+     COMPLETION COMMAND
+     ================================================================ */
+
+  function receiveBootCommand(
+    command
+  ) {
+
+    console.log(
+      "MEPLAY BOOT COMMAND:",
+      command
+    );
+
+
+    /*
+    --------------------------------------------------------------
+    Accept the exact command:
+
+      meplay.boot.animation.command(loading-complete:"true")
+    --------------------------------------------------------------
+    */
+
+    const normalized =
+      String(
+        command
+      )
+      .replace(
+        /\s+/g,
+        ""
+      );
+
+
+    if (
+      normalized ===
+      'meplay.boot.animation.command(loading-complete:"true")'
+    ) {
+
+      completeLoading();
+
+      return true;
+
+    }
+
+
+    return false;
+
+  }
+
+
+  /* ================================================================
+     PUBLIC COMMAND INTERFACE
+     ================================================================
+
+     The MePlay kernel can call:
+
+       window.meplay.boot.animation.command(
+         'loading-complete:"true"'
+       );
+
+     or:
+
+       window.meplayBootAnimationCommand(
+         'meplay.boot.animation.command(loading-complete:"true")'
+       );
+
+     ================================================================ */
+
+  window.meplayBootAnimationCommand =
+    function(command) {
+
+      return receiveBootCommand(
+        command
+      );
+
+    };
+
+
+  window.meplay =
+    window.meplay ||
+    {};
+
+
+  window.meplay.boot =
+    window.meplay.boot ||
+    {};
+
+
+  window.meplay.boot.animation =
+    window.meplay.boot.animation ||
+    {};
+
+
+  window.meplay.boot.animation.command =
+    function(command) {
+
+      /*
+      Allow the kernel to send:
+
+        loading-complete:"true"
+
+      */
+
+      if (
+        String(command)
+          .replace(/\s+/g, "")
+          ===
+        'loading-complete:"true"'
+      ) {
+
+        return completeLoading();
+
+      }
+
+
+      /*
+      Also accept the complete command string.
+      */
+
+      return receiveBootCommand(
+        command
+      );
+
+    };
+
+
+  /* ================================================================
+     POSTMESSAGE SUPPORT
+     ================================================================
+
+     This allows the kernel/host environment to send:
+
+       window.postMessage(
+         'meplay.boot.animation.command(loading-complete:"true")'
+       )
+
+     ================================================================ */
+
+  window.addEventListener(
+    "message",
+    event => {
+
+      if (
+        typeof event.data ===
+        "string"
+      ) {
+
+        receiveBootCommand(
+          event.data
+        );
+
+      }
+
+
+      if (
+        event.data &&
+        typeof event.data.command ===
+        "string"
+      ) {
+
+        receiveBootCommand(
+          event.data.command
+        );
+
+      }
+
+    }
+  );
+
+
+  /* ================================================================
+     COMPLETE LOADING
+     ================================================================ */
+
+  function completeLoading() {
+
+    if (
+      loadingCompleteReceived
+    ) {
+
+      return false;
+
+    }
+
+
+    loadingCompleteReceived =
+      true;
+
+
+    commandReceivedTime =
+      performance.now();
+
+
+    console.log(
+      "MEPLAY: loading-complete:true RECEIVED."
+    );
+
+
+    /*
+    Stop the 90 second warning timer.
+    */
+
+    if (
+      warningTimer
+    ) {
+
+      clearTimeout(
+        warningTimer
+      );
+
+      warningTimer =
+        null;
+
+    }
+
+
+    /*
+    Hide warning if it happened to already be visible.
+    */
+
+    warning.classList.remove(
+      "show"
+    );
+
+
+    /*
+    Complete the unique loading bar.
+    */
+
+    loadingComplete.style.width =
+      "100%";
+
+
+    loadingPercent.textContent =
+      "100%";
+
+
+    loadingStatus.textContent =
+      "World ready";
+
+
+    loadingSubtext.textContent =
+      "Entering MePlay Island";
+
+
+    /*
+    Wait for the completion bar to visually finish
+    before starting the cinematic zoom.
+    */
+
+    setTimeout(
+      () => {
+
+        startFinalBoot();
+
+      },
+      1200
+    );
+
+
+    return true;
+
+  }
+
+
+  /* ================================================================
+     FINAL BOOT
+     ================================================================ */
+
+  function startFinalBoot() {
+
+    if (
       finished
     ) {
 
@@ -1985,311 +1987,181 @@
     }
 
 
-    finalTransitionStarted =
-      true;
+    /*
+    Start the cinematic final sequence.
+    */
+
+    startTime =
+      performance.now();
 
 
-    loadingUI.classList.add(
+    bootWaiting =
+      false;
+
+
+    loadingInterface.classList.add(
       "hidden"
-    );
-
-
-    status.classList.add(
-      "show"
-    );
-
-
-    console.log(
-      "MEPLAY: Beginning final world-entry transition."
     );
 
   }
 
 
   /* ================================================================
-     BOOT UPDATE
+     UPDATE
      ================================================================ */
 
   function updateBoot(
     now
   ) {
 
+    /*
+    --------------------------------------------------------------
+    WAITING PHASE
+    --------------------------------------------------------------
+    */
+
     if (
-      !started ||
-      finished
+      bootWaiting &&
+      !loadingCompleteReceived
     ) {
+
+      const elapsed =
+        now -
+        startTime;
+
+
+      /*
+      Earth appears over the first second.
+      */
+
+      const earthT =
+        Math.min(
+          1,
+          elapsed / 1000
+        );
+
+
+      const earthEase =
+        1 -
+        Math.pow(
+          1 - earthT,
+          3
+        );
+
+
+      const earthScale =
+        0.001 +
+        (
+          1 -
+          0.001
+        ) *
+        earthEase;
+
+
+      earthRoot.scaling.setAll(
+        earthScale
+      );
+
+
+      /*
+      Earth begins rotating once visible.
+      */
+
+      if (
+        elapsed > 700
+      ) {
+
+        earthRoot.rotation.y +=
+          0.00028;
+
+      }
+
+
+      /*
+      Loading percentage deliberately does NOT
+      fake progress toward 100%.
+
+      It represents the boot handoff state.
+
+      */
+
+      if (
+        elapsed < 1000
+      ) {
+
+        loadingPercent.textContent =
+          "12%";
+
+      }
+      else {
+
+        loadingPercent.textContent =
+          "WAITING";
+
+      }
+
 
       return;
 
     }
 
 
-    const elapsed =
-      now -
-      startTime;
-
-
-    /* ============================================================
-       EARTH APPEARS
-       ============================================================ */
+    /*
+    --------------------------------------------------------------
+    FINAL CINEMATIC ZOOM
+    --------------------------------------------------------------
+    */
 
     if (
-      elapsed < 1000
+      !bootWaiting &&
+      loadingCompleteReceived &&
+      !finished &&
+      commandReceivedTime > 0
     ) {
 
-      const t =
-        clamp01(
-          elapsed /
-          1000
-        );
-
-
-      const e =
-        easeOutCubic(t);
-
-
-      const scale =
-        lerp(
-          0.001,
-          1,
-          e
-        );
-
-
-      earthRoot.scaling.setAll(
-        scale
-      );
-
-
-      setLoading(
-        lerp(
-          5,
-          18,
-          t
-        ),
-        "Initializing MePlay"
-      );
-
-    }
-
-
-    /* ============================================================
-       EARTH ROTATION
-       ============================================================ */
-
-    if (
-      elapsed > 700
-    ) {
-
-      earthRoot.rotation.y +=
-        0.00028;
-
-    }
-
-
-    /* ============================================================
-       LOGO RISE
-       ============================================================ */
-
-    if (
-      elapsed >= 1000 &&
-      elapsed < 3900
-    ) {
-
-      setLoading(
-        lerp(
-          18,
-          62,
-          clamp01(
-            (elapsed - 1000) /
-            2900
-          )
-        ),
-        "Preparing world"
-      );
-
-    }
-
-
-    if (
-      elapsed >= 3900 &&
-      elapsed < 4800
-    ) {
-
-      const t =
-        clamp01(
-          (elapsed - 3900) /
-          900
-        );
-
-
-      const e =
-        easeOutCubic(t);
-
-
-      logoRoot.scaling.setAll(
-        lerp(
-          0.001,
-          1,
-          e
-        )
-      );
-
-
-      logoRoot.position.y =
-        0.02 +
-        Math.sin(
-          e * Math.PI
-        ) *
-        0.08;
-
-
-      logoRoot.rotation.z =
-        (1 - e) *
-        -0.08;
-
-
-      setLoading(
-        lerp(
-          62,
-          76,
-          t
-        ),
-        "Synchronizing MePlay"
-      );
-
-    }
-
-
-    /* ============================================================
-       LOGO SETTLE
-       ============================================================ */
-
-    if (
-      elapsed >= 4800 &&
-      elapsed < 5800
-    ) {
-
-      const t =
-        clamp01(
-          (elapsed - 4800) /
-          1000
-        );
-
-
-      const pulse =
-        1 +
-        Math.sin(
-          t *
-          Math.PI *
-          2
-        ) *
-        0.025;
-
-
-      logoRoot.scaling.set(
-        pulse,
-        pulse,
-        pulse
-      );
-
-
-      magicMaterial.alpha =
-        0.42 *
-        Math.sin(
-          t *
-          Math.PI
-        );
-
-
-      setLoading(
-        lerp(
-          76,
-          88,
-          t
-        ),
-        "Preparing MePlay Island"
-      );
-
-    }
-
-
-    /* ============================================================
-       WAITING FOR KERNEL COMMAND
-       ============================================================ */
-
-    if (
-      elapsed >= 5800 &&
-      !finalTransitionStarted
-    ) {
-
-      /*
-      Keep the bar below 100%.
-
-      The command is what completes the boot.
-      */
-
-      setLoading(
-        92,
-        "Waiting for MePlay Island"
-      );
-
-    }
-
-
-    /* ============================================================
-       FINAL ZOOM
-
-       THIS ONLY RUNS AFTER:
-
-       meplay.boot.animation.command(loading-complete:"true")
-       ============================================================ */
-
-    if (
-      finalTransitionStarted
-    ) {
-
-      const transitionElapsed =
+      const elapsed =
         now -
-        (
-          startTime +
-          5800
-        );
-
-
-      const t =
-        clamp01(
-          transitionElapsed /
-          2200
-        );
-
-
-      const e =
-        easeInOutCubic(t);
+        commandReceivedTime;
 
 
       /*
-      ------------------------------------------------------------
-      LOGO FADES AWAY
-      ------------------------------------------------------------
+      Give the loading bar time to finish before
+      the cinematic transition.
       */
 
-      const logoFade =
-        1 -
-        smoothstep(
-          clamp01(
-            (t - 0.2) /
-            0.5
+      if (
+        elapsed < 1200
+      ) {
+
+        return;
+
+      }
+
+
+      const zoomElapsed =
+        elapsed -
+        1200;
+
+
+      const zoomDuration =
+        2200;
+
+
+      const t =
+        Math.max(
+          0,
+          Math.min(
+            1,
+            zoomElapsed /
+            zoomDuration
           )
         );
 
 
-      logoRoot.scaling.setAll(
-        Math.max(
-          0.001,
-          logoFade
-        )
-      );
+      const e =
+        easeInOutCubic(
+          t
+        );
 
 
       /*
@@ -2334,35 +2206,28 @@
 
 
       /*
+      Continue Earth rotation.
+      */
+
+      earthRoot.rotation.y +=
+        0.00042;
+
+
+      /*
       ------------------------------------------------------------
-      STATUS
+      ENTERING STATUS
       ------------------------------------------------------------
       */
 
       if (
-        t > 0.15
+        t > 0.62
       ) {
-
-        status.textContent =
-          "Entering MePlay";
 
         status.classList.add(
           "show"
         );
 
       }
-
-
-      /*
-      ------------------------------------------------------------
-      LOADING UI
-      ------------------------------------------------------------
-      */
-
-      setLoading(
-        100,
-        "Loading complete"
-      );
 
 
       /*
@@ -2388,7 +2253,7 @@
 
       /*
       ------------------------------------------------------------
-      DONE
+      COMPLETE
       ------------------------------------------------------------
       */
 
@@ -2403,21 +2268,98 @@
     }
 
 
-    /* ============================================================
-       COSMIC MOTION
-       ============================================================ */
+    /*
+    Cosmic background motion.
+    */
 
     stars.rotation.y +=
       0.00016;
 
+
     stars.rotation.x +=
       0.000025;
 
-    magicMesh.rotation.y +=
-      0.001;
+  }
 
-    magicMesh.rotation.z +=
-      0.0015;
+
+  /* ================================================================
+     EASING
+     ================================================================ */
+
+  function clamp01(
+    value
+  ) {
+
+    return Math.max(
+      0,
+      Math.min(
+        1,
+        value
+      )
+    );
+
+  }
+
+
+  function lerp(
+    a,
+    b,
+    t
+  ) {
+
+    return a +
+      (
+        b - a
+      ) *
+      t;
+
+  }
+
+
+  function easeInOutCubic(
+    t
+  ) {
+
+    t =
+      clamp01(
+        t
+      );
+
+
+    return t < 0.5
+
+      ? 4 *
+        t *
+        t *
+        t
+
+      : 1 -
+        Math.pow(
+          -2 * t + 2,
+          3
+        ) /
+        2;
+
+  }
+
+
+  function smoothstep(
+    t
+  ) {
+
+    t =
+      clamp01(
+        t
+      );
+
+
+    return t *
+      t *
+      (
+        3 -
+        2 *
+        t
+      );
 
   }
 
@@ -2441,11 +2383,6 @@
       true;
 
 
-    loadingUI.classList.add(
-      "hidden"
-    );
-
-
     status.textContent =
       "MePlay";
 
@@ -2455,24 +2392,22 @@
     );
 
 
-    setTimeout(
-      () => {
+    /*
+    Keep the screen white.
 
-        flash.style.opacity =
-          "0";
+    The MePlay Island boot system can now take over.
+    */
+
+    flash.style.opacity =
+      "1";
 
 
-        status.classList.remove(
-          "show"
-        );
-
-      },
-      500
-    );
-
+    /*
+    The boot animation itself remains finished.
+    */
 
     console.log(
-      "MEPLAY: Boot animation finished."
+      "MEPLAY: BOOT ANIMATION COMPLETE."
     );
 
   }
@@ -2529,11 +2464,20 @@
 
   resize();
 
+
+  /*
+  Earth begins loading immediately.
+
+  This is completely independent of the
+  90-second Island command timeout.
+  */
+
   loadEarth();
 
 
 })();
 </script>
+
 
 </body>
 </html>
