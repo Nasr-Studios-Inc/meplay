@@ -2,11 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover"
+  >
 
-  <title>MePlay — Cosmic Boot</title>
+  <title>MePlay — Cosmic Boot Animation</title>
 
+  <!-- Babylon.js -->
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
+
+  <!-- Babylon GLB/GLTF loader -->
   <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
 
   <style>
@@ -16,9 +22,9 @@
 
     html,
     body {
-      margin: 0;
       width: 100%;
       height: 100%;
+      margin: 0;
       overflow: hidden;
       background: #020414;
       font-family:
@@ -41,20 +47,27 @@
       position: fixed;
       left: 50%;
       bottom: max(22px, env(safe-area-inset-bottom));
+
       transform: translateX(-50%);
 
       z-index: 20;
 
       color: rgba(255,255,255,.9);
+
       font-size: 12px;
       font-weight: 500;
+
       letter-spacing: .2em;
       text-transform: uppercase;
 
       opacity: 0;
-      transition: opacity .45s ease;
+
+      transition:
+        opacity .45s ease;
 
       pointer-events: none;
+
+      white-space: nowrap;
 
       text-shadow:
         0 0 10px rgba(120,160,255,.9),
@@ -80,6 +93,7 @@
 
     #loading {
       position: fixed;
+
       left: 50%;
       top: 50%;
 
@@ -87,15 +101,18 @@
 
       z-index: 20;
 
-      color: rgba(255,255,255,.72);
+      color: rgba(255,255,255,.7);
 
       font-size: 11px;
+
       letter-spacing: .18em;
+
       text-transform: uppercase;
 
       pointer-events: none;
 
-      transition: opacity .5s ease;
+      transition:
+        opacity .5s ease;
     }
 
     #loading.hidden {
@@ -126,28 +143,39 @@
 
 
   /*
-  ============================================================
+  ================================================================
   MEPLAY COSMIC BOOT
-  ============================================================
+  ================================================================
 
-  Local model:
+  IMPORTANT FILE STRUCTURE:
 
-      ./earth-cartoon.glb
+      index.html
+      earth-cartoon.glb
 
-  Put the GLB beside this HTML file.
+  The GLB should be in the SAME folder as this HTML file.
 
-  No Three.js.
-  No GitHub model fetch.
-  No Drive.
-  No buttons.
+  This version:
 
-  ============================================================
+  • Uses Babylon.js only
+  • Loads the local GLB
+  • Keeps the GLB hierarchy intact
+  • Centers the entire model
+  • Calculates its actual size
+  • Automatically scales it
+  • Places the camera outside the Earth
+  • Does not reposition individual GLB meshes
+  • Does not use Three.js
+  • Has no buttons
+  • Has no launcher
+  • Has no fake "model missing" popup
+
+  ================================================================
   */
 
 
-  /* ==========================================================
+  /* ================================================================
      DOM
-     ========================================================== */
+     ================================================================ */
 
   const canvas =
     document.getElementById("canvas");
@@ -162,9 +190,9 @@
     document.getElementById("flash");
 
 
-  /* ==========================================================
+  /* ================================================================
      ENGINE
-     ========================================================== */
+     ================================================================ */
 
   const engine =
     new BABYLON.Engine(
@@ -179,13 +207,12 @@
     );
 
 
-  /* ==========================================================
+  /* ================================================================
      SCENE
-     ========================================================== */
+     ================================================================ */
 
   const scene =
     new BABYLON.Scene(engine);
-
 
   scene.clearColor =
     new BABYLON.Color4(
@@ -196,9 +223,9 @@
     );
 
 
-  /* ==========================================================
+  /* ================================================================
      CAMERA
-     ========================================================== */
+     ================================================================ */
 
   const camera =
     new BABYLON.UniversalCamera(
@@ -206,36 +233,28 @@
       new BABYLON.Vector3(
         0,
         0,
-        12
+        10
       ),
       scene
     );
 
-
   camera.fov =
     0.72;
-
 
   camera.minZ =
     0.05;
 
-
   camera.maxZ =
     5000;
 
-
   camera.setTarget(
-    new BABYLON.Vector3(
-      0,
-      0,
-      0
-    )
+    BABYLON.Vector3.Zero()
   );
 
 
-  /* ==========================================================
+  /* ================================================================
      LIGHTING
-     ========================================================== */
+     ================================================================ */
 
   const sun =
     new BABYLON.DirectionalLight(
@@ -248,10 +267,8 @@
       scene
     );
 
-
   sun.intensity =
-    1.45;
-
+    1.35;
 
   sun.diffuse =
     new BABYLON.Color3(
@@ -272,10 +289,8 @@
       scene
     );
 
-
   hemi.intensity =
-    0.55;
-
+    0.6;
 
   hemi.diffuse =
     new BABYLON.Color3(
@@ -283,7 +298,6 @@
       0.78,
       1
     );
-
 
   hemi.groundColor =
     new BABYLON.Color3(
@@ -304,10 +318,8 @@
       scene
     );
 
-
   rim.intensity =
-    20;
-
+    18;
 
   rim.diffuse =
     new BABYLON.Color3(
@@ -317,23 +329,23 @@
     );
 
 
-  /* ==========================================================
-     STARS
-     ========================================================== */
+  /* ================================================================
+     STAR FIELD
+     ================================================================ */
 
-  const starCount =
+  const STAR_COUNT =
     1800;
 
-  const positions =
+  const starPositions =
     [];
 
-  const colors =
+  const starColors =
     [];
 
 
   for (
     let i = 0;
-    i < starCount;
+    i < STAR_COUNT;
     i++
   ) {
 
@@ -352,7 +364,7 @@
       );
 
 
-    positions.push(
+    starPositions.push(
 
       radius *
       Math.sin(phi) *
@@ -372,27 +384,31 @@
       Math.random();
 
 
-    if (tint < 0.2) {
+    if (
+      tint < 0.2
+    ) {
 
-      colors.push(
+      starColors.push(
         0.55,
         0.72,
         1
       );
 
     }
-    else if (tint < 0.38) {
+    else if (
+      tint < 0.38
+    ) {
 
-      colors.push(
-        0.85,
-        0.62,
+      starColors.push(
+        0.86,
+        0.64,
         1
       );
 
     }
     else {
 
-      colors.push(
+      starColors.push(
         1,
         0.97,
         1
@@ -415,10 +431,10 @@
 
 
   starData.positions =
-    positions;
+    starPositions;
 
   starData.colors =
-    colors;
+    starColors;
 
 
   starData.applyToMesh(
@@ -437,14 +453,11 @@
   starMaterial.pointsCloud =
     true;
 
-
   starMaterial.pointSize =
     2;
 
-
   starMaterial.disableLighting =
     true;
-
 
   starMaterial.emissiveColor =
     new BABYLON.Color3(
@@ -452,7 +465,6 @@
       1,
       1
     );
-
 
   starMaterial.alpha =
     0.9;
@@ -462,9 +474,9 @@
     starMaterial;
 
 
-  /* ==========================================================
+  /* ================================================================
      EARTH ROOT
-     ========================================================== */
+     ================================================================ */
 
   const earthRoot =
     new BABYLON.TransformNode(
@@ -474,11 +486,11 @@
 
 
   earthRoot.position =
-    new BABYLON.Vector3(
-      0,
-      0,
-      0
-    );
+    BABYLON.Vector3.Zero();
+
+
+  earthRoot.rotation =
+    BABYLON.Vector3.Zero();
 
 
   earthRoot.scaling =
@@ -489,75 +501,79 @@
     );
 
 
-  let earthContainer =
-    null;
-
-
   let earthMeshes =
     [];
-
-
-  let earthRadius =
-    1.35;
-
 
   let earthReady =
     false;
 
+  let earthRadius =
+    1.4;
 
-  /* ==========================================================
-     LOAD LOCAL GLB
-     ========================================================== */
+
+  /* ================================================================
+     EARTH LOADING
+     ================================================================ */
 
   async function loadEarth() {
 
     console.log(
-      "MEPLAY: Loading local earth-cartoon.glb..."
+      "MEPLAY: Loading local Earth GLB..."
     );
 
 
     try {
 
-      earthContainer =
-        await BABYLON.SceneLoader
-          .LoadAssetContainerAsync(
-            "./",
-            "earth-cartoon.glb",
-            scene
-          );
+      /*
+      --------------------------------------------------------------
+      LOAD THE GLB
+      --------------------------------------------------------------
+      */
+
+      const container =
+        await BABYLON.SceneLoader.LoadAssetContainerAsync(
+          "./",
+          "earth-cartoon.glb",
+          scene
+        );
 
 
       console.log(
-        "MEPLAY: GLB loaded successfully."
+        "MEPLAY: Earth GLB loaded.",
+        container
       );
 
 
       /*
-      ----------------------------------------------------------
-      ADD THE COMPLETE CONTAINER
-      ----------------------------------------------------------
+      --------------------------------------------------------------
+      ADD EVERYTHING TO THE SCENE
+      --------------------------------------------------------------
       */
 
-      earthContainer.addAllToScene();
+      container.addAllToScene();
 
 
       /*
-      ----------------------------------------------------------
-      GET ROOT NODES
-      ----------------------------------------------------------
+      --------------------------------------------------------------
+      IMPORTANT:
+
+      Save the imported root nodes BEFORE changing anything.
+      --------------------------------------------------------------
       */
 
-      const rootNodes =
-        earthContainer.rootNodes || [];
+      const importedRoots =
+        container.rootNodes.slice();
 
 
       /*
-      ----------------------------------------------------------
-      PARENT ROOT NODES TO OUR EARTH ROOT
-      ----------------------------------------------------------
+      --------------------------------------------------------------
+      PUT THE COMPLETE IMPORTED HIERARCHY UNDER EARTH ROOT.
+
+      We do NOT move the individual meshes.
+      --------------------------------------------------------------
       */
 
-      rootNodes.forEach(
+      importedRoots.forEach(
         node => {
 
           if (
@@ -575,226 +591,351 @@
 
 
       /*
-      ----------------------------------------------------------
-      FIND ALL ACTUAL MESHES
-      ----------------------------------------------------------
+      --------------------------------------------------------------
+      FIND MESHES THAT BELONG TO THE GLB.
+
+      We specifically exclude our star field and the boot objects.
+      --------------------------------------------------------------
       */
 
       earthMeshes =
-        scene.meshes.filter(
+        container.meshes.filter(
           mesh =>
+            mesh &&
             mesh !== stars &&
-            mesh.isEnabled()
+            mesh.getTotalVertices() > 0
         );
+
+
+      console.log(
+        "MEPLAY: Earth mesh count:",
+        earthMeshes.length
+      );
+
+
+      if (
+        earthMeshes.length === 0
+      ) {
+
+        throw new Error(
+          "Earth GLB loaded, but no renderable meshes were found."
+        );
+
+      }
 
 
       /*
-      ----------------------------------------------------------
-      IF GLB HAS MESHES, CENTER USING WORLD BOUNDS
-      ----------------------------------------------------------
+      --------------------------------------------------------------
+      RESET THE ROOT.
+
+      This is critical.
+
+      The imported hierarchy stays intact.
+      --------------------------------------------------------------
       */
 
-      if (
-        earthMeshes.length > 0
-      ) {
+      earthRoot.position =
+        BABYLON.Vector3.Zero();
 
-        earthMeshes.forEach(
-          mesh => {
+      earthRoot.rotation =
+        BABYLON.Vector3.Zero();
 
-            mesh.computeWorldMatrix(
-              true
-            );
-
-          }
-        );
+      earthRoot.scaling =
+        BABYLON.Vector3.One();
 
 
-        let min =
-          new BABYLON.Vector3(
-            Infinity,
-            Infinity,
-            Infinity
+      /*
+      --------------------------------------------------------------
+      FORCE WORLD MATRICES.
+
+      --------------------------------------------------------------
+      */
+
+      earthRoot.computeWorldMatrix(
+        true
+      );
+
+
+      earthMeshes.forEach(
+        mesh => {
+
+          mesh.computeWorldMatrix(
+            true
           );
-
-
-        let max =
-          new BABYLON.Vector3(
-            -Infinity,
-            -Infinity,
-            -Infinity
-          );
-
-
-        earthMeshes.forEach(
-          mesh => {
-
-            const info =
-              mesh.getBoundingInfo();
-
-
-            if (!info) {
-              return;
-            }
-
-
-            const box =
-              info.boundingBox;
-
-
-            min =
-              BABYLON.Vector3.Minimize(
-                min,
-                box.minimumWorld
-              );
-
-
-            max =
-              BABYLON.Vector3.Maximize(
-                max,
-                box.maximumWorld
-              );
-
-          }
-        );
-
-
-        /*
-        --------------------------------------------------------
-        MODEL CENTER
-        --------------------------------------------------------
-        */
-
-        const center =
-          min.add(max)
-            .scale(0.5);
-
-
-        /*
-        --------------------------------------------------------
-        MOVE THE ROOT INSTEAD OF INDIVIDUAL MESHES
-        --------------------------------------------------------
-        */
-
-        earthRoot.position =
-          center.scale(-1);
-
-
-        /*
-        --------------------------------------------------------
-        MODEL SIZE
-        --------------------------------------------------------
-        */
-
-        const size =
-          max.subtract(min);
-
-
-        const largest =
-          Math.max(
-            size.x,
-            size.y,
-            size.z
-          );
-
-
-        /*
-        --------------------------------------------------------
-        TARGET EARTH DIAMETER
-        --------------------------------------------------------
-        */
-
-        const targetDiameter =
-          2.8;
-
-
-        if (
-          largest > 0 &&
-          Number.isFinite(largest)
-        ) {
-
-          const scale =
-            targetDiameter /
-            largest;
-
-
-          earthRoot.scaling =
-            new BABYLON.Vector3(
-              scale,
-              scale,
-              scale
-            );
-
-
-          earthRadius =
-            targetDiameter / 2;
 
         }
-
-
-        /*
-        --------------------------------------------------------
-        IMPORTANT:
-
-        The root is now centered around the actual model.
-        We do NOT move the individual GLB meshes.
-
-        This prevents the "inside the Earth" problem.
-        --------------------------------------------------------
-        */
-
-        earthReady =
-          true;
-
-
-        console.log(
-          "MEPLAY: Earth is ready.",
-          {
-            meshes: earthMeshes.length,
-            radius: earthRadius
-          }
-        );
-
-
-        loading.classList.add(
-          "hidden"
-        );
-
-
-        startBoot();
-
-      }
-
-      else {
-
-        throw new Error(
-          "The GLB loaded but contains no meshes."
-        );
-
-      }
-
-    }
-
-    catch (error) {
-
-      console.error(
-        "MEPLAY EARTH LOAD ERROR:",
-        error
       );
 
 
       /*
-      ----------------------------------------------------------
-      NO FALSE POPUP.
-
-      Instead, leave a console message.
-
-      The cosmic boot can still run with the loading
-      indicator removed.
-      ----------------------------------------------------------
+      --------------------------------------------------------------
+      GET THE ENTIRE EARTH BOUNDING BOX.
+      --------------------------------------------------------------
       */
 
-      loading.textContent =
-        "MePlay";
+      let minimum =
+        new BABYLON.Vector3(
+          Infinity,
+          Infinity,
+          Infinity
+        );
+
+
+      let maximum =
+        new BABYLON.Vector3(
+          -Infinity,
+          -Infinity,
+          -Infinity
+        );
+
+
+      earthMeshes.forEach(
+        mesh => {
+
+          const bounding =
+            mesh.getBoundingInfo();
+
+
+          if (
+            !bounding
+          ) {
+
+            return;
+
+          }
+
+
+          const box =
+            bounding.boundingBox;
+
+
+          minimum =
+            BABYLON.Vector3.Minimize(
+              minimum,
+              box.minimumWorld
+            );
+
+
+          maximum =
+            BABYLON.Vector3.Maximize(
+              maximum,
+              box.maximumWorld
+            );
+
+        }
+      );
+
+
+      /*
+      --------------------------------------------------------------
+      CHECK THE BOUNDS.
+      --------------------------------------------------------------
+      */
+
+      console.log(
+        "MEPLAY: Earth minimum:",
+        minimum
+      );
+
+      console.log(
+        "MEPLAY: Earth maximum:",
+        maximum
+      );
+
+
+      const dimensions =
+        maximum.subtract(
+          minimum
+        );
+
+
+      console.log(
+        "MEPLAY: Earth dimensions:",
+        dimensions
+      );
+
+
+      /*
+      --------------------------------------------------------------
+      FIND THE CENTER.
+      --------------------------------------------------------------
+      */
+
+      const center =
+        minimum
+          .add(maximum)
+          .scale(0.5);
+
+
+      /*
+      --------------------------------------------------------------
+      FIND THE LARGEST DIMENSION.
+      --------------------------------------------------------------
+      */
+
+      const largestDimension =
+        Math.max(
+          dimensions.x,
+          dimensions.y,
+          dimensions.z
+        );
+
+
+      if (
+        !Number.isFinite(
+          largestDimension
+        ) ||
+        largestDimension <= 0
+      ) {
+
+        throw new Error(
+          "Invalid Earth model dimensions."
+        );
+
+      }
+
+
+      /*
+      --------------------------------------------------------------
+      CENTER THE MODEL.
+
+      We move ONLY EarthRoot.
+
+      None of the GLB's individual meshes are moved.
+      --------------------------------------------------------------
+      */
+
+      earthRoot.position =
+        center.scale(-1);
+
+
+      /*
+      --------------------------------------------------------------
+      SCALE THE ENTIRE MODEL.
+
+      Target diameter = 2.8 Babylon units.
+      --------------------------------------------------------------
+      */
+
+      const targetDiameter =
+        2.8;
+
+
+      const modelScale =
+        targetDiameter /
+        largestDimension;
+
+
+      earthRoot.scaling =
+        new BABYLON.Vector3(
+          modelScale,
+          modelScale,
+          modelScale
+        );
+
+
+      earthRadius =
+        targetDiameter / 2;
+
+
+      /*
+      --------------------------------------------------------------
+      FORCE MATRICES AGAIN AFTER SCALING.
+      --------------------------------------------------------------
+      */
+
+      earthRoot.computeWorldMatrix(
+        true
+      );
+
+
+      earthMeshes.forEach(
+        mesh => {
+
+          mesh.computeWorldMatrix(
+            true
+          );
+
+        }
+      );
+
+
+      /*
+      --------------------------------------------------------------
+      FINAL SAFETY CHECK.
+
+      Recalculate the final bounds after centering/scaling.
+      --------------------------------------------------------------
+      */
+
+      let finalMin =
+        new BABYLON.Vector3(
+          Infinity,
+          Infinity,
+          Infinity
+        );
+
+
+      let finalMax =
+        new BABYLON.Vector3(
+          -Infinity,
+          -Infinity,
+          -Infinity
+        );
+
+
+      earthMeshes.forEach(
+        mesh => {
+
+          const box =
+            mesh.getBoundingInfo()
+              .boundingBox;
+
+
+          finalMin =
+            BABYLON.Vector3.Minimize(
+              finalMin,
+              box.minimumWorld
+            );
+
+
+          finalMax =
+            BABYLON.Vector3.Maximize(
+              finalMax,
+              box.maximumWorld
+            );
+
+        }
+      );
+
+
+      const finalSize =
+        finalMax.subtract(
+          finalMin
+        );
+
+
+      console.log(
+        "MEPLAY: FINAL Earth bounds:",
+        finalMin,
+        finalMax
+      );
+
+
+      console.log(
+        "MEPLAY: FINAL Earth size:",
+        finalSize
+      );
+
+
+      /*
+      --------------------------------------------------------------
+      SUCCESS.
+      --------------------------------------------------------------
+      */
+
+      earthReady =
+        true;
 
 
       loading.classList.add(
@@ -802,15 +943,57 @@
       );
 
 
-      /*
-      ----------------------------------------------------------
-      FALLBACK EARTH
+      console.log(
+        "MEPLAY: EARTH READY."
+      );
 
-      This only appears if the local GLB genuinely fails.
-      ----------------------------------------------------------
+
+      /*
+      --------------------------------------------------------------
+      START BOOT
+      --------------------------------------------------------------
+      */
+
+      startBoot();
+
+    }
+    catch (
+      error
+    ) {
+
+      console.error(
+        "================================================"
+      );
+
+      console.error(
+        "MEPLAY EARTH LOAD ERROR"
+      );
+
+      console.error(
+        error
+      );
+
+      console.error(
+        "================================================"
+      );
+
+
+      /*
+      --------------------------------------------------------------
+      NO POPUP.
+
+      Instead we create a very obvious fallback planet so
+      the rest of the animation remains testable.
+      --------------------------------------------------------------
       */
 
       createFallbackEarth();
+
+
+      loading.classList.add(
+        "hidden"
+      );
+
 
       startBoot();
 
@@ -819,18 +1002,18 @@
   }
 
 
-  /* ==========================================================
+  /* ================================================================
      FALLBACK EARTH
-     ========================================================== */
+     ================================================================ */
 
   function createFallbackEarth() {
 
     console.warn(
-      "MEPLAY: Using fallback Earth."
+      "MEPLAY: Creating fallback Earth."
     );
 
 
-    const earth =
+    const fallback =
       BABYLON.MeshBuilder.CreateSphere(
         "FallbackEarth",
         {
@@ -850,16 +1033,24 @@
 
     material.diffuseColor =
       new BABYLON.Color3(
-        0.08,
-        0.32,
-        0.8
+        0.06,
+        0.28,
+        0.75
+      );
+
+
+    material.emissiveColor =
+      new BABYLON.Color3(
+        0.008,
+        0.02,
+        0.06
       );
 
 
     material.specularColor =
       new BABYLON.Color3(
-        0.7,
-        0.8,
+        0.65,
+        0.75,
         1
       );
 
@@ -868,20 +1059,16 @@
       64;
 
 
-    material.emissiveColor =
-      new BABYLON.Color3(
-        0.01,
-        0.025,
-        0.08
-      );
-
-
-    earth.material =
+    fallback.material =
       material;
 
 
-    earth.parent =
+    fallback.parent =
       earthRoot;
+
+
+    fallback.position =
+      BABYLON.Vector3.Zero();
 
 
     earthRadius =
@@ -894,9 +1081,9 @@
   }
 
 
-  /* ==========================================================
-     PURPLE GOO
-     ========================================================== */
+  /* ================================================================
+     GOO MATERIAL
+     ================================================================ */
 
   const gooMaterial =
     new BABYLON.StandardMaterial(
@@ -933,6 +1120,10 @@
     96;
 
 
+  /* ================================================================
+     GOO GLOB
+     ================================================================ */
+
   const glob =
     BABYLON.MeshBuilder.CreateSphere(
       "gooGlob",
@@ -962,17 +1153,16 @@
 
 
   /*
-  Make sure the goo is ALWAYS rendered
-  in front of the Earth.
+  Goo is always rendered in front of the Earth.
   */
 
   glob.renderingGroupId =
     3;
 
 
-  /* ==========================================================
+  /* ================================================================
      GOO SPLAT
-     ========================================================== */
+     ================================================================ */
 
   const splat =
     BABYLON.MeshBuilder.CreateSphere(
@@ -1014,9 +1204,9 @@
     3;
 
 
-  /* ==========================================================
+  /* ================================================================
      MP LOGO
-     ========================================================== */
+     ================================================================ */
 
   const logoRoot =
     new BABYLON.TransformNode(
@@ -1041,11 +1231,9 @@
     );
 
 
-  /*
-  ----------------------------------------------------------
-  M
-  ----------------------------------------------------------
-  */
+  /* ================================================================
+     M
+     ================================================================ */
 
   function createM() {
 
@@ -1081,26 +1269,50 @@
 
     const pieces = [
 
-      [-0.38, 0, 0.20, 0.72, -0.16],
+      {
+        x: -0.38,
+        y: 0,
+        w: 0.20,
+        h: 0.72,
+        r: -0.16
+      },
 
-      [ 0.38, 0, 0.20, 0.72,  0.16],
+      {
+        x: 0.38,
+        y: 0,
+        w: 0.20,
+        h: 0.72,
+        r: 0.16
+      },
 
-      [-0.10, 0.18, 0.18, 0.48, 0.58],
+      {
+        x: -0.10,
+        y: 0.18,
+        w: 0.18,
+        h: 0.48,
+        r: 0.58
+      },
 
-      [ 0.10, 0.18, 0.18, 0.48, -0.58]
+      {
+        x: 0.10,
+        y: 0.18,
+        w: 0.18,
+        h: 0.48,
+        r: -0.58
+      }
 
     ];
 
 
     pieces.forEach(
-      (p, i) => {
+      (piece, index) => {
 
         const box =
           BABYLON.MeshBuilder.CreateBox(
-            "M" + i,
+            "M" + index,
             {
-              width: p[2],
-              height: p[3],
+              width: piece.w,
+              height: piece.h,
               depth: 0.16
             },
             scene
@@ -1112,14 +1324,14 @@
 
 
         box.position.set(
-          p[0],
-          p[1],
+          piece.x,
+          piece.y,
           0
         );
 
 
         box.rotation.z =
-          p[4];
+          piece.r;
 
 
         box.parent =
@@ -1138,11 +1350,9 @@
   }
 
 
-  /*
-  ----------------------------------------------------------
-  P
-  ----------------------------------------------------------
-  */
+  /* ================================================================
+     P
+     ================================================================ */
 
   function createP() {
 
@@ -1200,6 +1410,10 @@
       root;
 
 
+    stem.renderingGroupId =
+      4;
+
+
     const top =
       BABYLON.MeshBuilder.CreateTorus(
         "PTop",
@@ -1231,6 +1445,10 @@
       root;
 
 
+    top.renderingGroupId =
+      4;
+
+
     const cut =
       BABYLON.MeshBuilder.CreateBox(
         "PCut",
@@ -1256,6 +1474,10 @@
 
     cut.parent =
       root;
+
+
+    cut.renderingGroupId =
+      4;
 
 
     return root;
@@ -1287,9 +1509,9 @@
     0.53;
 
 
-  /* ==========================================================
+  /* ================================================================
      LOGO RING
-     ========================================================== */
+     ================================================================ */
 
   const logoRing =
     BABYLON.MeshBuilder.CreateTorus(
@@ -1350,9 +1572,9 @@
     4;
 
 
-  /* ==========================================================
+  /* ================================================================
      MAGIC PARTICLES
-     ========================================================== */
+     ================================================================ */
 
   const magicCount =
     300;
@@ -1381,11 +1603,14 @@
 
     magicPositions.push(
 
-      Math.cos(angle) * radius,
+      Math.cos(angle) *
+      radius,
 
-      (Math.random() - 0.5) * 3,
+      (Math.random() - 0.5) *
+      3,
 
-      Math.sin(angle) * radius
+      Math.sin(angle) *
+      radius
 
     );
 
@@ -1452,21 +1677,112 @@
     5;
 
 
-  /* ==========================================================
-     ANIMATION
-     ========================================================== */
+  /* ================================================================
+     EASING
+     ================================================================ */
+
+  function clamp01(value) {
+
+    return Math.max(
+      0,
+      Math.min(
+        1,
+        value
+      )
+    );
+
+  }
+
+
+  function lerp(
+    a,
+    b,
+    t
+  ) {
+
+    return a +
+      (b - a) *
+      t;
+
+  }
+
+
+  function easeOutCubic(t) {
+
+    t =
+      clamp01(t);
+
+    return 1 -
+      Math.pow(
+        1 - t,
+        3
+      );
+
+  }
+
+
+  function easeInCubic(t) {
+
+    t =
+      clamp01(t);
+
+    return t *
+      t *
+      t;
+
+  }
+
+
+  function easeInOutCubic(t) {
+
+    t =
+      clamp01(t);
+
+    return t < 0.5
+
+      ? 4 *
+        t *
+        t *
+        t
+
+      : 1 -
+        Math.pow(
+          -2 * t + 2,
+          3
+        ) / 2;
+
+  }
+
+
+  function smoothstep(t) {
+
+    t =
+      clamp01(t);
+
+    return t *
+      t *
+      (3 - 2 * t);
+
+  }
+
+
+  /* ================================================================
+     BOOT STATE
+     ================================================================ */
 
   let started =
     false;
 
-
   let finished =
     false;
-
 
   let startTime =
     0;
 
+
+  /* ================================================================
+     START
+     ================================================================ */
 
   function startBoot() {
 
@@ -1479,12 +1795,54 @@
     }
 
 
+    if (
+      !earthReady
+    ) {
+
+      return;
+
+    }
+
+
     started =
       true;
 
 
+    finished =
+      false;
+
+
     startTime =
       performance.now();
+
+
+    /*
+    Start safely outside the Earth.
+
+    */
+
+    camera.position.set(
+      0,
+      0.25,
+      8
+    );
+
+
+    camera.setTarget(
+      BABYLON.Vector3.Zero()
+    );
+
+
+    /*
+    Earth starts tiny.
+    */
+
+    earthRoot.scaling =
+      new BABYLON.Vector3(
+        0.001,
+        0.001,
+        0.001
+      );
 
 
     loading.classList.add(
@@ -1494,7 +1852,13 @@
   }
 
 
-  function updateBoot(now) {
+  /* ================================================================
+     BOOT UPDATE
+     ================================================================ */
+
+  function updateBoot(
+    now
+  ) {
 
     if (
       !started ||
@@ -1507,12 +1871,14 @@
 
 
     const elapsed =
-      now - startTime;
+      now -
+      startTime;
 
 
-    /* ========================================================
+    /* ============================================================
+       0 — 1000 ms
        EARTH APPEARS
-       ======================================================== */
+       ============================================================ */
 
     if (
       elapsed < 1000
@@ -1520,7 +1886,8 @@
 
       const t =
         clamp01(
-          elapsed / 1000
+          elapsed /
+          1000
         );
 
 
@@ -1543,9 +1910,9 @@
     }
 
 
-    /* ========================================================
-       EARTH ROTATES
-       ======================================================== */
+    /* ============================================================
+       EARTH ROTATION
+       ============================================================ */
 
     if (
       elapsed > 700
@@ -1557,9 +1924,10 @@
     }
 
 
-    /* ========================================================
+    /* ============================================================
+       1000 — 2500 ms
        GOO FLIES IN
-       ======================================================== */
+       ============================================================ */
 
     if (
       elapsed >= 1000 &&
@@ -1586,17 +1954,34 @@
         1 - e;
 
 
-      const sx = -2.8;
-      const sy = 5.8;
-      const sz = 3.8;
+      const sx =
+        -2.8;
 
-      const cx = -0.9;
-      const cy = 3.4;
-      const cz = 3.1;
+      const sy =
+        5.8;
 
-      const ex = 0;
-      const ey = 1.28;
-      const ez = 1.28;
+      const sz =
+        3.8;
+
+
+      const cx =
+        -0.9;
+
+      const cy =
+        3.4;
+
+      const cz =
+        3.1;
+
+
+      const ex =
+        0;
+
+      const ey =
+        1.28;
+
+      const ez =
+        1.28;
 
 
       glob.position.set(
@@ -1617,7 +2002,8 @@
 
 
       glob.rotation.x =
-        0.4 + t * 1.2;
+        0.4 +
+        t * 1.2;
 
 
       glob.rotation.y =
@@ -1625,7 +2011,8 @@
 
 
       glob.rotation.z =
-        -0.25 + t * 0.7;
+        -0.25 +
+        t * 0.7;
 
 
       const squash =
@@ -1665,9 +2052,9 @@
     }
 
 
-    /* ========================================================
+    /* ============================================================
        IMPACT
-       ======================================================== */
+       ============================================================ */
 
     if (
       elapsed >= 2500 &&
@@ -1692,27 +2079,47 @@
 
       glob.position.set(
         0,
-        lerp(1.28, 1.20, e),
-        lerp(1.28, 1.38, e)
+        lerp(
+          1.28,
+          1.20,
+          e
+        ),
+        lerp(
+          1.28,
+          1.38,
+          e
+        )
       );
 
 
       glob.scaling.set(
 
-        lerp(.92, 1.55, e),
+        lerp(
+          .92,
+          1.55,
+          e
+        ),
 
-        lerp(.30, .14, e),
+        lerp(
+          .30,
+          .14,
+          e
+        ),
 
-        lerp(.82, 1.12, e)
+        lerp(
+          .82,
+          1.12,
+          e
+        )
 
       );
 
     }
 
 
-    /* ========================================================
+    /* ============================================================
        SPLAT
-       ======================================================== */
+       ============================================================ */
 
     if (
       elapsed >= 2700 &&
@@ -1742,27 +2149,43 @@
 
       splat.scaling.set(
 
-        lerp(.05, 1.16, e),
+        lerp(
+          .05,
+          1.16,
+          e
+        ),
 
-        lerp(.025, .18, e),
+        lerp(
+          .025,
+          .18,
+          e
+        ),
 
-        lerp(.05, .82, e)
+        lerp(
+          .05,
+          .82,
+          e
+        )
 
       );
 
 
       splat.position.set(
         0,
-        lerp(1.38, 1.19, e),
+        lerp(
+          1.38,
+          1.19,
+          e
+        ),
         1.38
       );
 
     }
 
 
-    /* ========================================================
+    /* ============================================================
        LOGO RISE
-       ======================================================== */
+       ============================================================ */
 
     if (
       elapsed >= 3900 &&
@@ -1793,18 +2216,20 @@
         0.02 +
         Math.sin(
           e * Math.PI
-        ) * 0.08;
+        ) *
+        0.08;
 
 
       logoRoot.rotation.z =
-        (1 - e) * -0.08;
+        (1 - e) *
+        -0.08;
 
     }
 
 
-    /* ========================================================
+    /* ============================================================
        LOGO SETTLE
-       ======================================================== */
+       ============================================================ */
 
     if (
       elapsed >= 4800 &&
@@ -1821,8 +2246,11 @@
       const pulse =
         1 +
         Math.sin(
-          t * Math.PI * 2
-        ) * 0.025;
+          t *
+          Math.PI *
+          2
+        ) *
+        0.025;
 
 
       logoRoot.scaling.set(
@@ -1835,15 +2263,16 @@
       magicMaterial.alpha =
         0.42 *
         Math.sin(
-          t * Math.PI
+          t *
+          Math.PI
         );
 
     }
 
 
-    /* ========================================================
-       FINAL WORLD ZOOM
-       ======================================================== */
+    /* ============================================================
+       FINAL ZOOM
+       ============================================================ */
 
     if (
       elapsed >= 5800
@@ -1861,9 +2290,9 @@
 
 
       /*
-      --------------------------------------------------------
-      LOGO FADES
-      --------------------------------------------------------
+      ------------------------------------------------------------
+      LOGO FADES AWAY
+      ------------------------------------------------------------
       */
 
       const logoFade =
@@ -1885,33 +2314,35 @@
 
 
       /*
-      --------------------------------------------------------
-      CAMERA
+      ------------------------------------------------------------
+      CAMERA SAFETY
 
-      This is deliberately based on the Earth radius.
+      The camera starts FAR outside the Earth.
 
-      We NEVER put the camera inside the sphere.
-      --------------------------------------------------------
+      It ends close enough for the dramatic world-entry
+      transition, but remains outside the model.
+
+      ------------------------------------------------------------
       */
 
-      const safeOutsideDistance =
+      const startDistance =
         Math.max(
-          earthRadius * 2.6,
-          3.6
+          earthRadius * 4.8,
+          7
         );
 
 
-      const finalDistance =
+      const endDistance =
         Math.max(
-          earthRadius * 1.18,
-          1.65
+          earthRadius * 1.35,
+          1.9
         );
 
 
       camera.position.z =
         lerp(
-          safeOutsideDistance,
-          finalDistance,
+          startDistance,
+          endDistance,
           e
         );
 
@@ -1919,7 +2350,7 @@
       camera.position.y =
         lerp(
           0.25,
-          0.02,
+          0.03,
           e
         );
 
@@ -1930,9 +2361,9 @@
 
 
       /*
-      --------------------------------------------------------
+      ------------------------------------------------------------
       STATUS
-      --------------------------------------------------------
+      ------------------------------------------------------------
       */
 
       if (
@@ -1947,9 +2378,9 @@
 
 
       /*
-      --------------------------------------------------------
+      ------------------------------------------------------------
       FLASH
-      --------------------------------------------------------
+      ------------------------------------------------------------
       */
 
       if (
@@ -1967,6 +2398,12 @@
       }
 
 
+      /*
+      ------------------------------------------------------------
+      DONE
+      ------------------------------------------------------------
+      */
+
       if (
         t >= 1
       ) {
@@ -1978,11 +2415,9 @@
     }
 
 
-    /*
-    ----------------------------------------------------------
-    COSMIC MOTION
-    ----------------------------------------------------------
-    */
+    /* ============================================================
+       COSMIC MOTION
+       ============================================================ */
 
     stars.rotation.y +=
       0.00016;
@@ -2002,9 +2437,9 @@
   }
 
 
-  /* ==========================================================
+  /* ================================================================
      FINISH
-     ========================================================== */
+     ================================================================ */
 
   function finish() {
 
@@ -2048,9 +2483,9 @@
   }
 
 
-  /* ==========================================================
+  /* ================================================================
      RESIZE
-     ========================================================== */
+     ================================================================ */
 
   function resize() {
 
@@ -2071,9 +2506,9 @@
   );
 
 
-  /* ==========================================================
-     LOOP
-     ========================================================== */
+  /* ================================================================
+     RENDER LOOP
+     ================================================================ */
 
   engine.runRenderLoop(
     () => {
@@ -2093,9 +2528,9 @@
   );
 
 
-  /* ==========================================================
-     GO
-     ========================================================== */
+  /* ================================================================
+     START
+     ================================================================ */
 
   resize();
 
