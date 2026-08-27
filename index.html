@@ -1,0 +1,2392 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover"
+  >
+
+  <title>MePlay — Cosmic Boot Animation</title>
+
+  <!-- Babylon.js -->
+  <script src="https://cdn.babylonjs.com/babylon.js"></script>
+
+  <!-- Babylon GLB / glTF loader -->
+  <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+
+      background:
+        radial-gradient(
+          circle at 50% 45%,
+          #101b48 0%,
+          #070c2b 38%,
+          #020417 72%,
+          #01020b 100%
+        );
+
+      font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+    }
+
+    #babylonCanvas {
+      position: fixed;
+      inset: 0;
+
+      width: 100%;
+      height: 100%;
+
+      display: block;
+
+      z-index: 0;
+    }
+
+    #status {
+      position: fixed;
+
+      left: 50%;
+      bottom: max(18px, env(safe-area-inset-bottom));
+
+      transform: translateX(-50%);
+
+      z-index: 20;
+
+      color: rgba(255,255,255,.88);
+
+      font-size: 12px;
+      font-weight: 500;
+
+      letter-spacing: .18em;
+      text-transform: uppercase;
+
+      opacity: 0;
+
+      transition:
+        opacity .4s ease;
+
+      pointer-events: none;
+
+      text-align: center;
+      white-space: nowrap;
+
+      text-shadow:
+        0 0 8px rgba(130,170,255,.8),
+        0 0 22px rgba(100,100,255,.55);
+    }
+
+    #status.show {
+      opacity: 1;
+    }
+
+    #flash {
+      position: fixed;
+      inset: 0;
+
+      z-index: 30;
+
+      background: white;
+
+      opacity: 0;
+
+      pointer-events: none;
+    }
+
+    #loading {
+      position: fixed;
+
+      left: 50%;
+      top: 50%;
+
+      transform:
+        translate(-50%, -50%);
+
+      z-index: 25;
+
+      color: rgba(255,255,255,.75);
+
+      font-size: 12px;
+
+      letter-spacing: .14em;
+
+      text-transform: uppercase;
+
+      pointer-events: none;
+
+      transition:
+        opacity .5s ease;
+    }
+
+    #loading.hidden {
+      opacity: 0;
+    }
+
+    #error {
+      position: fixed;
+
+      left: 50%;
+      top: 50%;
+
+      transform:
+        translate(-50%, -50%);
+
+      width: min(90vw, 600px);
+
+      padding: 24px;
+
+      z-index: 100;
+
+      display: none;
+
+      color: white;
+
+      background:
+        rgba(5,8,25,.95);
+
+      border:
+        1px solid rgba(130,170,255,.35);
+
+      border-radius: 18px;
+
+      text-align: center;
+
+      line-height: 1.5;
+
+      box-shadow:
+        0 0 50px rgba(50,80,255,.25);
+    }
+  </style>
+</head>
+
+<body>
+
+  <canvas id="babylonCanvas"></canvas>
+
+  <div id="loading">
+    Loading MePlay
+  </div>
+
+  <div id="status">
+    Entering MePlay
+  </div>
+
+  <div id="flash"></div>
+
+  <div id="error"></div>
+
+
+<script>
+(() => {
+
+  "use strict";
+
+
+  /*
+  ============================================================
+  MEPLAY COSMIC BOOT
+  ============================================================
+
+  ENGINE:
+      Babylon.js
+
+  MODEL:
+      ./earth-cartoon.glb
+
+  IMPORTANT:
+      The Earth is a LOCAL asset.
+
+      Put:
+
+          index.html
+          earth-cartoon.glb
+
+      in the SAME directory.
+
+  There is NO Three.js in this version.
+  ============================================================
+  */
+
+
+  /* ==========================================================
+     ELEMENTS
+     ========================================================== */
+
+  const canvas =
+    document.getElementById(
+      "babylonCanvas"
+    );
+
+  const loading =
+    document.getElementById(
+      "loading"
+    );
+
+  const status =
+    document.getElementById(
+      "status"
+    );
+
+  const flash =
+    document.getElementById(
+      "flash"
+    );
+
+  const errorBox =
+    document.getElementById(
+      "error"
+    );
+
+
+  /* ==========================================================
+     LOCAL EARTH MODEL
+     ========================================================== */
+
+  const EARTH_FILE =
+    "earth-cartoon.glb";
+
+
+  /* ==========================================================
+     HELPERS
+     ========================================================== */
+
+  const clamp01 =
+    value =>
+      Math.max(
+        0,
+        Math.min(
+          1,
+          value
+        )
+      );
+
+
+  const lerp =
+    (a,b,t) =>
+      a + (b-a) * t;
+
+
+  function easeOutCubic(t) {
+
+    t =
+      clamp01(t);
+
+    return 1 -
+      Math.pow(
+        1-t,
+        3
+      );
+  }
+
+
+  function easeInCubic(t) {
+
+    t =
+      clamp01(t);
+
+    return t*t*t;
+  }
+
+
+  function easeInOutCubic(t) {
+
+    t =
+      clamp01(t);
+
+    if (t < .5) {
+
+      return 4*t*t*t;
+
+    }
+
+    return 1 -
+      Math.pow(
+        -2*t+2,
+        3
+      ) / 2;
+  }
+
+
+  function smoothstep(t) {
+
+    t =
+      clamp01(t);
+
+    return (
+      t*t *
+      (3-2*t)
+    );
+  }
+
+
+  /* ==========================================================
+     BABYLON ENGINE
+     ========================================================== */
+
+  const engine =
+    new BABYLON.Engine(
+      canvas,
+      true,
+      {
+        preserveDrawingBuffer: true,
+        stencil: true,
+        antialias: true
+      },
+      true
+    );
+
+
+  /* ==========================================================
+     SCENE
+     ========================================================== */
+
+  const scene =
+    new BABYLON.Scene(
+      engine
+    );
+
+
+  scene.clearColor =
+    new BABYLON.Color4(
+      .002,
+      .004,
+      .025,
+      1
+    );
+
+
+  /* ==========================================================
+     CAMERA
+     ========================================================== */
+
+  const camera =
+    new BABYLON.UniversalCamera(
+      "camera",
+      new BABYLON.Vector3(
+        0,
+        .25,
+        8.2
+      ),
+      scene
+    );
+
+
+  camera.setTarget(
+    new BABYLON.Vector3(
+      0,
+      .05,
+      0
+    )
+  );
+
+
+  camera.fov =
+    .72;
+
+
+  camera.minZ =
+    .05;
+
+
+  camera.maxZ =
+    2000;
+
+
+  /* ==========================================================
+     LIGHTING
+     ========================================================== */
+
+  const hemi =
+    new BABYLON.HemisphericLight(
+      "hemi",
+      new BABYLON.Vector3(
+        .15,
+        1,
+        .25
+      ),
+      scene
+    );
+
+
+  hemi.intensity =
+    .75;
+
+
+  hemi.diffuse =
+    new BABYLON.Color3(
+      .72,
+      .82,
+      1
+    );
+
+
+  hemi.groundColor =
+    new BABYLON.Color3(
+      .035,
+      .045,
+      .11
+    );
+
+
+  /*
+  ------------------------------------------------------------
+  SUN
+  ------------------------------------------------------------
+  */
+
+  const sun =
+    new BABYLON.DirectionalLight(
+      "sun",
+      new BABYLON.Vector3(
+        -.5,
+        -.7,
+        -1
+      ),
+      scene
+    );
+
+
+  sun.intensity =
+    1.55;
+
+
+  sun.diffuse =
+    new BABYLON.Color3(
+      1,
+      .96,
+      .86
+    );
+
+
+  /*
+  ------------------------------------------------------------
+  BLUE RIM LIGHT
+  ------------------------------------------------------------
+  */
+
+  const rim =
+    new BABYLON.PointLight(
+      "rim",
+      new BABYLON.Vector3(
+        -4,
+        3,
+        5
+      ),
+      scene
+    );
+
+
+  rim.intensity =
+    22;
+
+
+  rim.diffuse =
+    new BABYLON.Color3(
+      .25,
+      .42,
+      1
+    );
+
+
+  /* ==========================================================
+     STAR FIELD
+     ========================================================== */
+
+  const STAR_COUNT =
+    1800;
+
+
+  const starPositions =
+    [];
+
+
+  const starColors =
+    [];
+
+
+  for (
+    let i=0;
+    i<STAR_COUNT;
+    i++
+  ) {
+
+    const radius =
+      30 +
+      Math.random()*130;
+
+
+    const theta =
+      Math.random() *
+      Math.PI *
+      2;
+
+
+    const phi =
+      Math.acos(
+        2*Math.random()-1
+      );
+
+
+    starPositions.push(
+
+      radius *
+      Math.sin(phi) *
+      Math.cos(theta),
+
+      radius *
+      Math.cos(phi),
+
+      radius *
+      Math.sin(phi) *
+      Math.sin(theta)
+
+    );
+
+
+    const type =
+      Math.random();
+
+
+    if (type < .2) {
+
+      starColors.push(
+        .55,
+        .72,
+        1
+      );
+
+    }
+
+    else if (type < .38) {
+
+      starColors.push(
+        .86,
+        .62,
+        1
+      );
+
+    }
+
+    else {
+
+      starColors.push(
+        1,
+        .97,
+        1
+      );
+
+    }
+
+  }
+
+
+  const starMesh =
+    new BABYLON.Mesh(
+      "stars",
+      scene
+    );
+
+
+  const starData =
+    new BABYLON.VertexData();
+
+
+  starData.positions =
+    starPositions;
+
+
+  starData.colors =
+    starColors;
+
+
+  starData.applyToMesh(
+    starMesh,
+    true
+  );
+
+
+  const starMaterial =
+    new BABYLON.StandardMaterial(
+      "starMaterial",
+      scene
+    );
+
+
+  starMaterial.pointsCloud =
+    true;
+
+
+  starMaterial.pointSize =
+    2;
+
+
+  starMaterial.disableLighting =
+    true;
+
+
+  starMaterial.emissiveColor =
+    new BABYLON.Color3(
+      1,
+      1,
+      1
+    );
+
+
+  starMaterial.alpha =
+    .9;
+
+
+  starMesh.material =
+    starMaterial;
+
+
+  /* ==========================================================
+     EARTH ROOT
+     ========================================================== */
+
+  const earthRoot =
+    new BABYLON.TransformNode(
+      "EarthRoot",
+      scene
+    );
+
+
+  earthRoot.position =
+    new BABYLON.Vector3(
+      0,
+      0,
+      0
+    );
+
+
+  earthRoot.scaling =
+    new BABYLON.Vector3(
+      .001,
+      .001,
+      .001
+    );
+
+
+  let earthMeshes =
+    [];
+
+
+  let earthLoaded =
+    false;
+
+
+  /* ==========================================================
+     EARTH LOADER
+     ========================================================== */
+
+  async function loadEarth() {
+
+    console.log(
+      "MEPLAY: Loading local Earth model..."
+    );
+
+
+    try {
+
+      /*
+      --------------------------------------------------------
+      IMPORTANT
+
+      "./"
+
+      means the model is loaded from the SAME FOLDER
+      as this HTML file.
+      --------------------------------------------------------
+      */
+
+      const container =
+        await BABYLON.SceneLoader
+          .LoadAssetContainerAsync(
+            "./",
+            EARTH_FILE,
+            scene
+          );
+
+
+      console.log(
+        "MEPLAY: Local Earth loaded!",
+        container
+      );
+
+
+      /*
+      --------------------------------------------------------
+      ADD MODEL
+      --------------------------------------------------------
+      */
+
+      container.addAllToScene();
+
+
+      /*
+      --------------------------------------------------------
+      COLLECT MESHES
+      --------------------------------------------------------
+      */
+
+      earthMeshes =
+        container.meshes.filter(
+          mesh =>
+            mesh instanceof BABYLON.AbstractMesh
+        );
+
+
+      /*
+      --------------------------------------------------------
+      PARENT MODEL
+      --------------------------------------------------------
+      */
+
+      earthMeshes.forEach(
+        mesh => {
+
+          mesh.parent =
+            earthRoot;
+
+          mesh.isVisible =
+            true;
+
+          mesh.isPickable =
+            false;
+
+        }
+      );
+
+
+      /*
+      --------------------------------------------------------
+      FIND BOUNDING BOX
+      --------------------------------------------------------
+      */
+
+      let min =
+        new BABYLON.Vector3(
+          Infinity,
+          Infinity,
+          Infinity
+        );
+
+
+      let max =
+        new BABYLON.Vector3(
+          -Infinity,
+          -Infinity,
+          -Infinity
+        );
+
+
+      earthMeshes.forEach(
+        mesh => {
+
+          mesh.computeWorldMatrix(
+            true
+          );
+
+
+          const box =
+            mesh.getBoundingInfo()
+              .boundingBox;
+
+
+          min =
+            BABYLON.Vector3.Minimize(
+              min,
+              box.minimumWorld
+            );
+
+
+          max =
+            BABYLON.Vector3.Maximize(
+              max,
+              box.maximumWorld
+            );
+
+        }
+      );
+
+
+      /*
+      --------------------------------------------------------
+      NORMALIZE MODEL SIZE
+      --------------------------------------------------------
+      */
+
+      const size =
+        max.subtract(
+          min
+        );
+
+
+      const largest =
+        Math.max(
+          size.x,
+          size.y,
+          size.z
+        );
+
+
+      if (
+        largest > 0 &&
+        Number.isFinite(largest)
+      ) {
+
+        const scale =
+          2.7 / largest;
+
+
+        earthRoot.scaling =
+          new BABYLON.Vector3(
+            scale,
+            scale,
+            scale
+          );
+
+      }
+
+
+      /*
+      --------------------------------------------------------
+      CENTER MODEL
+      --------------------------------------------------------
+      */
+
+      const center =
+        min.add(
+          max
+        ).scale(
+          .5
+        );
+
+
+      earthMeshes.forEach(
+        mesh => {
+
+          mesh.position
+            .subtractInPlace(
+              center
+            );
+
+        }
+      );
+
+
+      /*
+      --------------------------------------------------------
+      FORCE NORMAL DEPTH BEHAVIOR
+      --------------------------------------------------------
+
+      This makes sure objects in front of the Earth
+      don't incorrectly disappear inside it.
+      --------------------------------------------------------
+      */
+
+      earthMeshes.forEach(
+        mesh => {
+
+          mesh.renderingGroupId =
+            1;
+
+        }
+      );
+
+
+      /*
+      --------------------------------------------------------
+      EARTH READY
+      --------------------------------------------------------
+      */
+
+      earthLoaded =
+        true;
+
+
+      loading.classList.add(
+        "hidden"
+      );
+
+
+      console.log(
+        "MEPLAY: Earth ready."
+      );
+
+
+      startBoot();
+
+    }
+
+    catch (error) {
+
+      console.error(
+        "MEPLAY EARTH LOAD ERROR:",
+        error
+      );
+
+
+      loading.classList.add(
+        "hidden"
+      );
+
+
+      errorBox.style.display =
+        "block";
+
+
+      errorBox.innerHTML =
+
+        `
+          <strong>
+            MePlay couldn't load Earth.
+          </strong>
+
+          <br><br>
+
+          Make sure
+          <strong>earth-cartoon.glb</strong>
+          is in the same folder as this HTML file.
+
+          <br><br>
+
+          Expected:
+
+          <br><br>
+
+          <code>
+            index.html
+            <br>
+            earth-cartoon.glb
+          </code>
+
+          <br><br>
+
+          Then restart the preview.
+        `;
+
+    }
+
+  }
+
+
+  /* ==========================================================
+     PURPLE GOO MATERIAL
+     ========================================================== */
+
+  const gooMaterial =
+    new BABYLON.StandardMaterial(
+      "gooMaterial",
+      scene
+    );
+
+
+  gooMaterial.diffuseColor =
+    new BABYLON.Color3(
+      .46,
+      .08,
+      .85
+    );
+
+
+  gooMaterial.emissiveColor =
+    new BABYLON.Color3(
+      .12,
+      .015,
+      .25
+    );
+
+
+  gooMaterial.specularColor =
+    new BABYLON.Color3(
+      .95,
+      .75,
+      1
+    );
+
+
+  gooMaterial.specularPower =
+    96;
+
+
+  /* ==========================================================
+     GOO GLOB
+     ========================================================== */
+
+  const glob =
+    BABYLON.MeshBuilder.CreateSphere(
+      "glob",
+      {
+        diameter: 1,
+        segments: 32
+      },
+      scene
+    );
+
+
+  glob.material =
+    gooMaterial;
+
+
+  glob.scaling =
+    new BABYLON.Vector3(
+      .72,
+      .82,
+      .66
+    );
+
+
+  glob.setEnabled(
+    false
+  );
+
+
+  glob.renderingGroupId =
+    2;
+
+
+  /* ==========================================================
+     GOO SPLAT
+     ========================================================== */
+
+  const splat =
+    BABYLON.MeshBuilder.CreateSphere(
+      "splat",
+      {
+        diameter: 1,
+        segments: 48
+      },
+      scene
+    );
+
+
+  splat.material =
+    gooMaterial;
+
+
+  splat.scaling =
+    new BABYLON.Vector3(
+      1,
+      .16,
+      .74
+    );
+
+
+  splat.position =
+    new BABYLON.Vector3(
+      0,
+      1.21,
+      1.05
+    );
+
+
+  splat.setEnabled(
+    false
+  );
+
+
+  splat.renderingGroupId =
+    2;
+
+
+  /* ==========================================================
+     MP LOGO
+     ========================================================== */
+
+  const logoRoot =
+    new BABYLON.TransformNode(
+      "logoRoot",
+      scene
+    );
+
+
+  logoRoot.position =
+    new BABYLON.Vector3(
+      0,
+      .02,
+      1.40
+    );
+
+
+  logoRoot.scaling =
+    new BABYLON.Vector3(
+      .001,
+      .001,
+      .001
+    );
+
+
+  /*
+  ------------------------------------------------------------
+  M
+  ------------------------------------------------------------
+  */
+
+  function makeM() {
+
+    const root =
+      new BABYLON.TransformNode(
+        "M",
+        scene
+      );
+
+
+    const material =
+      new BABYLON.StandardMaterial(
+        "M_Material",
+        scene
+      );
+
+
+    material.diffuseColor =
+      new BABYLON.Color3(
+        1,
+        .72,
+        .03
+      );
+
+
+    material.emissiveColor =
+      new BABYLON.Color3(
+        .18,
+        .07,
+        .005
+      );
+
+
+    material.specularColor =
+      new BABYLON.Color3(
+        1,
+        .9,
+        .55
+      );
+
+
+    const pieces = [
+
+      {
+        x: -.38,
+        y: 0,
+        sx: .20,
+        sy: .72,
+        r: -.16
+      },
+
+      {
+        x: .38,
+        y: 0,
+        sx: .20,
+        sy: .72,
+        r: .16
+      },
+
+      {
+        x: -.10,
+        y: .18,
+        sx: .18,
+        sy: .48,
+        r: .58
+      },
+
+      {
+        x: .10,
+        y: .18,
+        sx: .18,
+        sy: .48,
+        r: -.58
+      }
+
+    ];
+
+
+    pieces.forEach(
+      (p,i) => {
+
+        const box =
+          BABYLON.MeshBuilder.CreateBox(
+            "MPiece"+i,
+            {
+              width: p.sx,
+              height: p.sy,
+              depth: .16
+            },
+            scene
+          );
+
+
+        box.material =
+          material;
+
+
+        box.position.set(
+          p.x,
+          p.y,
+          0
+        );
+
+
+        box.rotation.z =
+          p.r;
+
+
+        box.parent =
+          root;
+
+
+        box.renderingGroupId =
+          3;
+
+      }
+    );
+
+
+    return root;
+
+  }
+
+
+  /*
+  ------------------------------------------------------------
+  P
+  ------------------------------------------------------------
+  */
+
+  function makeP() {
+
+    const root =
+      new BABYLON.TransformNode(
+        "P",
+        scene
+      );
+
+
+    const material =
+      new BABYLON.StandardMaterial(
+        "P_Material",
+        scene
+      );
+
+
+    material.diffuseColor =
+      new BABYLON.Color3(
+        .03,
+        .55,
+        1
+      );
+
+
+    material.emissiveColor =
+      new BABYLON.Color3(
+        .005,
+        .08,
+        .2
+      );
+
+
+    material.specularColor =
+      new BABYLON.Color3(
+        .55,
+        .85,
+        1
+      );
+
+
+    /*
+    STEM
+    */
+
+    const stem =
+      BABYLON.MeshBuilder.CreateBox(
+        "PStem",
+        {
+          width: .20,
+          height: 1.35,
+          depth: .17
+        },
+        scene
+      );
+
+
+    stem.material =
+      material;
+
+
+    stem.position.x =
+      -.30;
+
+
+    stem.parent =
+      root;
+
+
+    /*
+    TOP LOOP
+    */
+
+    const top =
+      BABYLON.MeshBuilder.CreateTorus(
+        "PTop",
+        {
+          diameter: .60,
+          thickness: .18,
+          tessellation: 32
+        },
+        scene
+      );
+
+
+    top.material =
+      material;
+
+
+    top.rotation.x =
+      Math.PI/2;
+
+
+    top.position.set(
+      -.02,
+      .31,
+      0
+    );
+
+
+    top.parent =
+      root;
+
+
+    /*
+    CUTOUT
+    */
+
+    const cut =
+      BABYLON.MeshBuilder.CreateBox(
+        "PCut",
+        {
+          width: .35,
+          height: .32,
+          depth: .30
+        },
+        scene
+      );
+
+
+    cut.material =
+      material;
+
+
+    cut.position.set(
+      .05,
+      .05,
+      0
+    );
+
+
+    cut.parent =
+      root;
+
+
+    return root;
+
+  }
+
+
+  const M =
+    makeM();
+
+
+  const P =
+    makeP();
+
+
+  M.parent =
+    logoRoot;
+
+
+  P.parent =
+    logoRoot;
+
+
+  M.position.x =
+    -.53;
+
+
+  P.position.x =
+    .53;
+
+
+  /*
+  ------------------------------------------------------------
+  LOGO RING
+  ------------------------------------------------------------
+  */
+
+  const logoRing =
+    BABYLON.MeshBuilder.CreateTorus(
+      "logoRing",
+      {
+        diameter: 2.25,
+        thickness: .035,
+        tessellation: 96
+      },
+      scene
+    );
+
+
+  const ringMaterial =
+    new BABYLON.StandardMaterial(
+      "ringMaterial",
+      scene
+    );
+
+
+  ringMaterial.emissiveColor =
+    new BABYLON.Color3(
+      .55,
+      .20,
+      1
+    );
+
+
+  ringMaterial.diffuseColor =
+    new BABYLON.Color3(
+      .4,
+      .1,
+      .8
+    );
+
+
+  ringMaterial.alpha =
+    .65;
+
+
+  logoRing.material =
+    ringMaterial;
+
+
+  logoRing.parent =
+    logoRoot;
+
+
+  logoRing.rotation.x =
+    Math.PI/2;
+
+
+  logoRing.position.z =
+    -.03;
+
+
+  /* ==========================================================
+     MAGIC PARTICLES
+     ========================================================== */
+
+  const MAGIC_COUNT =
+    300;
+
+
+  const magicPositions =
+    [];
+
+
+  for (
+    let i=0;
+    i<MAGIC_COUNT;
+    i++
+  ) {
+
+    const radius =
+      1.5 +
+      Math.random()*3;
+
+
+    const angle =
+      Math.random() *
+      Math.PI *
+      2;
+
+
+    magicPositions.push(
+
+      Math.cos(angle) *
+      radius,
+
+      (Math.random()-.5)*3,
+
+      Math.sin(angle) *
+      radius
+
+    );
+
+  }
+
+
+  const magicMesh =
+    new BABYLON.Mesh(
+      "magicParticles",
+      scene
+    );
+
+
+  const magicData =
+    new BABYLON.VertexData();
+
+
+  magicData.positions =
+    magicPositions;
+
+
+  magicData.applyToMesh(
+    magicMesh,
+    true
+  );
+
+
+  const magicMaterial =
+    new BABYLON.StandardMaterial(
+      "magicMaterial",
+      scene
+    );
+
+
+  magicMaterial.pointsCloud =
+    true;
+
+
+  magicMaterial.pointSize =
+    3;
+
+
+  magicMaterial.disableLighting =
+    true;
+
+
+  magicMaterial.emissiveColor =
+    new BABYLON.Color3(
+      .7,
+      .25,
+      1
+    );
+
+
+  magicMaterial.alpha =
+    0;
+
+
+  magicMesh.material =
+    magicMaterial;
+
+
+  magicMesh.renderingGroupId =
+    4;
+
+
+  /* ==========================================================
+     BOOT STATE
+     ========================================================== */
+
+  let started =
+    false;
+
+
+  let finished =
+    false;
+
+
+  let startTime =
+    0;
+
+
+  /* ==========================================================
+     RESET
+     ========================================================== */
+
+  function resetWorld() {
+
+    started =
+      true;
+
+
+    finished =
+      false;
+
+
+    startTime =
+      performance.now();
+
+
+    status.classList.remove(
+      "show"
+    );
+
+
+    camera.position.set(
+      0,
+      .25,
+      8.2
+    );
+
+
+    camera.setTarget(
+      new BABYLON.Vector3(
+        0,
+        .05,
+        0
+      )
+    );
+
+
+    earthRoot.scaling.setAll(
+      .001
+    );
+
+
+    earthRoot.rotation.set(
+      0,
+      0,
+      0
+    );
+
+
+    glob.setEnabled(
+      false
+    );
+
+
+    splat.setEnabled(
+      false
+    );
+
+
+    logoRoot.scaling.setAll(
+      .001
+    );
+
+
+    magicMaterial.alpha =
+      0;
+
+
+    flash.style.opacity =
+      "0";
+
+  }
+
+
+  /* ==========================================================
+     BOOT ANIMATION
+     ========================================================== */
+
+  function updateBoot(now) {
+
+    if (
+      !started ||
+      finished ||
+      !earthLoaded
+    ) {
+
+      return;
+
+    }
+
+
+    const elapsed =
+      now - startTime;
+
+
+    /* ========================================================
+       0–900ms
+       EARTH MATERIALIZES
+       ======================================================== */
+
+    if (
+      elapsed < 900
+    ) {
+
+      const t =
+        clamp01(
+          elapsed / 900
+        );
+
+
+      const e =
+        easeOutCubic(
+          t
+        );
+
+
+      const scale =
+        lerp(
+          .001,
+          1,
+          e
+        );
+
+
+      earthRoot.scaling.setAll(
+        scale
+      );
+
+    }
+
+
+    /* ========================================================
+       EARTH ROTATION
+       ======================================================== */
+
+    if (
+      elapsed > 600
+    ) {
+
+      earthRoot.rotation.y +=
+        .00035;
+
+    }
+
+
+    /* ========================================================
+       900–2450ms
+       GOO FLIES IN
+       ======================================================== */
+
+    if (
+      elapsed >= 900 &&
+      elapsed < 2450
+    ) {
+
+      glob.setEnabled(
+        true
+      );
+
+
+      const t =
+        clamp01(
+          (elapsed-900) /
+          1550
+        );
+
+
+      const e =
+        easeInCubic(
+          t
+        );
+
+
+      const sx =
+        -2.8;
+
+
+      const sy =
+        5.8;
+
+
+      const sz =
+        3.8;
+
+
+      const cx =
+        -.9;
+
+
+      const cy =
+        3.4;
+
+
+      const cz =
+        3.1;
+
+
+      const ex =
+        0;
+
+
+      const ey =
+        1.28;
+
+
+      const ez =
+        1.28;
+
+
+      const one =
+        1-e;
+
+
+      const x =
+        one*one*sx +
+        2*one*e*cx +
+        e*e*ex;
+
+
+      const y =
+        one*one*sy +
+        2*one*e*cy +
+        e*e*ey;
+
+
+      const z =
+        one*one*sz +
+        2*one*e*cz +
+        e*e*ez;
+
+
+      glob.position.set(
+        x,
+        y,
+        z
+      );
+
+
+      glob.rotation.x =
+        .4 +
+        t*1.2;
+
+
+      glob.rotation.y =
+        t*.8;
+
+
+      glob.rotation.z =
+        -.25 +
+        t*.7;
+
+
+      const squash =
+        t > .82
+
+          ? 1 -
+            smoothstep(
+              (t-.82)/.18
+            )*.48
+
+          : 1;
+
+
+      glob.scaling.set(
+
+        .72 *
+        (
+          1 +
+          (1-squash)*.75
+        ),
+
+        .82 *
+        squash,
+
+        .66 *
+        (
+          1 +
+          (1-squash)*.25
+        )
+
+      );
+
+    }
+
+
+    /* ========================================================
+       2450–2750ms
+       IMPACT
+       ======================================================== */
+
+    if (
+      elapsed >= 2450 &&
+      elapsed < 2750
+    ) {
+
+      glob.setEnabled(
+        true
+      );
+
+
+      const t =
+        clamp01(
+          (elapsed-2450)/300
+        );
+
+
+      const e =
+        easeOutCubic(
+          t
+        );
+
+
+      glob.position.set(
+        0,
+        lerp(
+          1.28,
+          1.20,
+          e
+        ),
+        lerp(
+          1.28,
+          1.38,
+          e
+        )
+      );
+
+
+      glob.scaling.set(
+
+        lerp(
+          .92,
+          1.55,
+          e
+        ),
+
+        lerp(
+          .30,
+          .14,
+          e
+        ),
+
+        lerp(
+          .82,
+          1.12,
+          e
+        )
+
+      );
+
+    }
+
+
+    /* ========================================================
+       2650–3900ms
+       GOO SPLAT
+       ======================================================== */
+
+    if (
+      elapsed >= 2650 &&
+      elapsed < 3900
+    ) {
+
+      glob.setEnabled(
+        false
+      );
+
+
+      splat.setEnabled(
+        true
+      );
+
+
+      const t =
+        clamp01(
+          (elapsed-2650)/850
+        );
+
+
+      const e =
+        easeOutCubic(
+          t
+        );
+
+
+      splat.scaling.set(
+
+        lerp(
+          .05,
+          1.16,
+          e
+        ),
+
+        lerp(
+          .025,
+          .18,
+          e
+        ),
+
+        lerp(
+          .05,
+          .82,
+          e
+        )
+
+      );
+
+
+      splat.position.set(
+
+        0,
+
+        lerp(
+          1.38,
+          1.19,
+          e
+        ),
+
+        1.38
+
+      );
+
+    }
+
+
+    /* ========================================================
+       3900–4700ms
+       MP LOGO RISE
+       ======================================================== */
+
+    if (
+      elapsed >= 3900 &&
+      elapsed < 4700
+    ) {
+
+      splat.setEnabled(
+        true
+      );
+
+
+      const t =
+        clamp01(
+          (elapsed-3900)/800
+        );
+
+
+      const e =
+        easeOutCubic(
+          t
+        );
+
+
+      logoRoot.scaling.setAll(
+        lerp(
+          .001,
+          1,
+          e
+        )
+      );
+
+
+      logoRoot.position.y =
+        .02 +
+        Math.sin(
+          e*Math.PI
+        )*.08;
+
+
+      logoRoot.rotation.z =
+        (1-e)*-.08;
+
+    }
+
+
+    /* ========================================================
+       4700–5700ms
+       LOGO SETTLES
+       ======================================================== */
+
+    if (
+      elapsed >= 4700 &&
+      elapsed < 5700
+    ) {
+
+      logoRoot.scaling.setAll(
+        1
+      );
+
+
+      const t =
+        clamp01(
+          (elapsed-4700)/1000
+        );
+
+
+      const pulse =
+        1 +
+        Math.sin(
+          t*Math.PI*2
+        )*.025;
+
+
+      logoRoot.scaling.set(
+        pulse,
+        pulse,
+        pulse
+      );
+
+
+      magicMaterial.alpha =
+        .42 *
+        Math.sin(
+          t*Math.PI
+        );
+
+    }
+
+
+    /* ========================================================
+       5700–7800ms
+       ENTER MEPLAY
+       ======================================================== */
+
+    if (
+      elapsed >= 5700
+    ) {
+
+      const t =
+        clamp01(
+          (elapsed-5700)/2100
+        );
+
+
+      const e =
+        easeInOutCubic(
+          t
+        );
+
+
+      /*
+      --------------------------------------------------------
+      FADE LOGO
+      --------------------------------------------------------
+      */
+
+      const logoFade =
+        1 -
+        smoothstep(
+          clamp01(
+            (t-.25)/.5
+          )
+        );
+
+
+      logoRoot.scaling.setAll(
+        Math.max(
+          .001,
+          logoFade
+        )
+      );
+
+
+      /*
+      --------------------------------------------------------
+      CAMERA ZOOM
+      --------------------------------------------------------
+      */
+
+      camera.position.z =
+        lerp(
+          8.2,
+          3.25,
+          e
+        );
+
+
+      camera.position.y =
+        lerp(
+          .25,
+          .08,
+          e
+        );
+
+
+      /*
+      --------------------------------------------------------
+      AIM AT EARTH
+      --------------------------------------------------------
+      */
+
+      camera.setTarget(
+        new BABYLON.Vector3(
+          0,
+          0,
+          0
+        )
+      );
+
+
+      /*
+      --------------------------------------------------------
+      STATUS
+      --------------------------------------------------------
+      */
+
+      if (
+        t > .72
+      ) {
+
+        status.classList.add(
+          "show"
+        );
+
+      }
+
+
+      /*
+      --------------------------------------------------------
+      FINAL FLASH
+      --------------------------------------------------------
+      */
+
+      if (
+        t > .88
+      ) {
+
+        flash.style.opacity =
+          String(
+            smoothstep(
+              (t-.88)/.12
+            )
+          );
+
+      }
+
+
+      /*
+      --------------------------------------------------------
+      DONE
+      --------------------------------------------------------
+      */
+
+      if (
+        t >= 1
+      ) {
+
+        finish();
+
+      }
+
+    }
+
+
+    /* ========================================================
+       COSMIC MOTION
+       ======================================================== */
+
+    starMesh.rotation.y +=
+      .00018;
+
+
+    starMesh.rotation.x +=
+      .00003;
+
+
+    magicMesh.rotation.y +=
+      .001;
+
+
+    magicMesh.rotation.z +=
+      .0015;
+
+  }
+
+
+  /* ==========================================================
+     FINISH
+     ========================================================== */
+
+  function finish() {
+
+    if (
+      finished
+    ) {
+
+      return;
+
+    }
+
+
+    finished =
+      true;
+
+
+    status.textContent =
+      "MePlay";
+
+
+    status.classList.add(
+      "show"
+    );
+
+
+    setTimeout(
+      () => {
+
+        flash.style.opacity =
+          "0";
+
+
+        status.classList.remove(
+          "show"
+        );
+
+      },
+      450
+    );
+
+  }
+
+
+  /* ==========================================================
+     RESIZE
+     ========================================================== */
+
+  function resize() {
+
+    engine.resize();
+
+  }
+
+
+  window.addEventListener(
+    "resize",
+    resize
+  );
+
+
+  window.addEventListener(
+    "orientationchange",
+    resize
+  );
+
+
+  /* ==========================================================
+     RENDER LOOP
+     ========================================================== */
+
+  engine.runRenderLoop(
+    () => {
+
+      const now =
+        performance.now();
+
+
+      updateBoot(
+        now
+      );
+
+
+      scene.render();
+
+    }
+  );
+
+
+  /* ==========================================================
+     START
+     ========================================================== */
+
+  resize();
+
+  loadEarth();
+
+
+})();
+</script>
+
+</body>
+</html>
