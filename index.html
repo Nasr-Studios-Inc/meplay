@@ -680,6 +680,7 @@ body{
       starColors.push(
         0.55,
         0.72,
+        1,
         1
       );
 
@@ -688,6 +689,7 @@ body{
       starColors.push(
         0.86,
         0.64,
+        1,
         1
       );
 
@@ -696,6 +698,7 @@ body{
       starColors.push(
         1,
         0.97,
+        1,
         1
       );
 
@@ -766,22 +769,129 @@ body{
 
 
   /* =========================================================
-     BOOT STATE
+     GLB FILTER
+     
+     The downloaded Earth model can contain decorative
+     orbit/ring/satellite/helper objects.
+
+     We do NOT want those objects in the MePlay boot scene.
   ========================================================= */
 
-  let bootStarted = false;
+  function isUnwantedEarthObject(mesh){
 
-  let loadingCompleteReceived = false;
+    if(!mesh){
+      return true;
+    }
 
-  let finished = false;
+    const name =
+      String(
+        mesh.name ||
+        ""
+      ).toLowerCase();
 
-  let startTime = 0;
+    const id =
+      String(
+        mesh.id ||
+        ""
+      ).toLowerCase();
 
-  let commandTime = 0;
+    const combined =
+      name + " " + id;
 
-  let warningShown = false;
 
-  let errorShown = false;
+    const unwantedWords = [
+
+      "orbit",
+      "ring",
+      "satellite",
+      "moon",
+      "halo",
+      "helper",
+      "guide",
+      "gizmo",
+      "trajectory",
+      "path",
+      "circle",
+      "line",
+      "outline",
+      "axis",
+      "arrow"
+
+    ];
+
+
+    for(
+      const word of unwantedWords
+    ){
+
+      if(
+        combined.includes(word)
+      ){
+
+        return true;
+
+      }
+
+    }
+
+
+    return false;
+
+  }
+
+
+  /* =========================================================
+     DISABLE ANIMATIONS ON IMPORTED GLB
+     
+     This prevents a GLB animation from independently
+     rotating an orbit/ring around the Earth.
+  ========================================================= */
+
+  function stopImportedAnimations(){
+
+    try{
+
+      if(
+        scene.animationGroups &&
+        scene.animationGroups.length
+      ){
+
+        scene.animationGroups.forEach(
+          group => {
+
+            const groupName =
+              String(
+                group.name ||
+                ""
+              ).toLowerCase();
+
+            if(
+              groupName.includes("orbit") ||
+              groupName.includes("ring") ||
+              groupName.includes("satellite") ||
+              groupName.includes("moon") ||
+              groupName.includes("rotate")
+            ){
+
+              group.stop();
+
+            }
+
+          }
+        );
+
+      }
+
+    }catch(error){
+
+      console.warn(
+        "MEPLAY: Could not inspect GLB animation groups.",
+        error
+      );
+
+    }
+
+  }
 
 
   /* =========================================================
@@ -803,21 +913,43 @@ body{
           scene
         );
 
+
       console.log(
         "MEPLAY: Earth GLB loaded."
       );
 
+
+      /*
+        Add the imported content first so Babylon
+        creates all necessary scene objects.
+      */
+
       container.addAllToScene();
+
+
+      /*
+        Immediately stop any imported animation groups
+        that look like orbit/ring/satellite animations.
+      */
+
+      stopImportedAnimations();
+
 
       const importedRoots =
         container.rootNodes.slice();
+
+
+      /*
+        Put imported roots underneath our Earth root.
+      */
 
       importedRoots.forEach(
         node => {
 
           if(
             node &&
-            node !== earthRoot
+            node !== earthRoot &&
+            node !== stars
           ){
 
             node.parent =
@@ -829,7 +961,15 @@ body{
       );
 
 
-      earthMeshes =
+      /*
+        Find renderable meshes.
+
+        IMPORTANT:
+        We now explicitly remove likely orbit/ring/
+        satellite/helper objects.
+      */
+
+      const allImportedMeshes =
         container.meshes.filter(
           mesh =>
             mesh &&
@@ -838,16 +978,73 @@ body{
         );
 
 
+      const rejectedMeshes = [];
+
+
+      earthMeshes =
+        allImportedMeshes.filter(
+          mesh => {
+
+            if(
+              isUnwantedEarthObject(mesh)
+            ){
+
+              rejectedMeshes.push(
+                mesh
+              );
+
+              return false;
+
+            }
+
+            return true;
+
+          }
+        );
+
+
+      /*
+        Hide rejected meshes instead of destroying them.
+        This is safer because some GLB objects may have
+        parent/child relationships.
+      */
+
+      rejectedMeshes.forEach(
+        mesh => {
+
+          mesh.setEnabled(false);
+
+          mesh.isVisible = false;
+
+        }
+      );
+
+
+      console.log(
+        "MEPLAY: Imported renderable meshes:",
+        earthMeshes.length
+      );
+
+      console.log(
+        "MEPLAY: Filtered helper/orbit meshes:",
+        rejectedMeshes.length
+      );
+
+
       if(
         earthMeshes.length === 0
       ){
 
         throw new Error(
-          "No renderable Earth meshes found."
+          "No renderable Earth meshes found after filtering."
         );
 
       }
 
+
+      /* =====================================================
+         CENTER MODEL
+      ===================================================== */
 
       earthRoot.position =
         BABYLON.Vector3.Zero();
@@ -893,11 +1090,13 @@ body{
               .getBoundingInfo()
               .boundingBox;
 
+
           minimum =
             BABYLON.Vector3.Minimize(
               minimum,
               box.minimumWorld
             );
+
 
           maximum =
             BABYLON.Vector3.Maximize(
@@ -943,11 +1142,16 @@ body{
           .scale(0.5);
 
 
+      /*
+        Move the model's center to the origin.
+      */
+
       earthRoot.position =
         center.scale(-1);
 
 
-      const targetDiameter = 2.8;
+      const targetDiameter =
+        2.8;
 
 
       const modelScale =
@@ -996,7 +1200,9 @@ body{
         error
       );
 
+
       createFallbackEarth();
+
 
       startBoot();
 
@@ -1036,12 +1242,14 @@ body{
         0.75
       );
 
+
     material.emissiveColor =
       new BABYLON.Color3(
         0.008,
         0.02,
         0.06
       );
+
 
     material.specularColor =
       new BABYLON.Color3(
@@ -1050,20 +1258,30 @@ body{
         1
       );
 
+
     material.specularPower = 64;
+
 
     fallback.material =
       material;
 
+
     fallback.parent =
       earthRoot;
+
 
     fallback.position =
       BABYLON.Vector3.Zero();
 
+
     earthRadius = 1.4;
 
     earthReady = true;
+
+
+    console.warn(
+      "MEPLAY: Using fallback Earth."
+    );
 
   }
 
@@ -1072,15 +1290,32 @@ body{
      START BOOT
   ========================================================= */
 
+  let bootStarted = false;
+
+  let loadingCompleteReceived = false;
+
+  let finished = false;
+
+  let startTime = 0;
+
+  let commandTime = 0;
+
+  let warningShown = false;
+
+  let errorShown = false;
+
+
   function startBoot(){
 
     if(bootStarted){
       return;
     }
 
+
     if(!earthReady){
       return;
     }
+
 
     bootStarted = true;
 
@@ -1092,8 +1327,10 @@ body{
 
     errorShown = false;
 
+
     startTime =
       performance.now();
+
 
     earthRoot.scaling =
       new BABYLON.Vector3(
@@ -1102,19 +1339,23 @@ body{
         0.001
       );
 
+
     camera.position.set(
       0,
       0.25,
       8
     );
 
+
     camera.setTarget(
       BABYLON.Vector3.Zero()
     );
 
+
     console.log(
       "MEPLAY: BOOT ANIMATION STARTED."
     );
+
 
     console.log(
       'MEPLAY: Waiting for loading-complete:"true"...'
@@ -1124,10 +1365,10 @@ body{
 
 
   /* =========================================================
-     LOADING COMMAND
+     NORMAL MEPLAY BOOT API
      
-     THIS IS NORMAL MEPLAY BOOT API.
-     NOT DEBUG CONSOLE CODE.
+     THIS STAYS IN INDEX.HTML.
+     THE DEBUG MODULE DOES NOT OWN THIS.
   ========================================================= */
 
   function meplayBootCommand(command){
@@ -1183,6 +1424,7 @@ body{
 
 
     loadingCompleteReceived = true;
+
 
     commandTime =
       performance.now();
@@ -1332,6 +1574,7 @@ body{
     t =
       clamp01(t);
 
+
     return 1 -
       Math.pow(
         1-t,
@@ -1345,6 +1588,7 @@ body{
 
     t =
       clamp01(t);
+
 
     return t < 0.5
 
@@ -1363,6 +1607,7 @@ body{
 
     t =
       clamp01(t);
+
 
     return t*t*(3-2*t);
 
@@ -1409,6 +1654,7 @@ body{
             index -
             cycle
           );
+
 
         node.classList.toggle(
           "active",
@@ -1476,9 +1722,11 @@ body{
 
       warningShown = true;
 
+
       warning.classList.add(
         "show"
       );
+
 
       console.warn(
         "MEPLAY: 90 second boot warning."
@@ -1496,9 +1744,11 @@ body{
 
       errorShown = true;
 
+
       errorPanel.classList.add(
         "show"
       );
+
 
       console.error(
         "MEPLAY: BOOT TIMEOUT — MPLAY-BOOT-001"
@@ -1546,8 +1796,10 @@ body{
             1000
           );
 
+
         const e =
           easeOutCubic(t);
+
 
         const scale =
           lerp(
@@ -1556,12 +1808,20 @@ body{
             e
           );
 
+
         earthRoot.scaling.setAll(
           scale
         );
 
       }
 
+
+      /*
+        Only the Earth root rotates.
+
+        Nothing else in the scene is being rotated
+        around the Earth.
+      */
 
       if(elapsed > 700){
 
@@ -1687,20 +1947,25 @@ body{
       return;
     }
 
+
     finished = true;
+
 
     status.textContent =
       "MePlay Island";
 
+
     status.classList.add(
       "show"
     );
+
 
     setTimeout(
       () => {
 
         flash.style.opacity =
           "0";
+
 
         status.classList.remove(
           "show"
@@ -1709,6 +1974,7 @@ body{
       },
       500
     );
+
 
     console.log(
       "MEPLAY: BOOT ANIMATION COMPLETE."
@@ -1750,17 +2016,34 @@ body{
       const now =
         performance.now();
 
-      updateLoadingUI(now);
 
-      updateTimeout(now);
+      updateLoadingUI(
+        now
+      );
 
-      updateBoot(now);
+
+      updateTimeout(
+        now
+      );
+
+
+      updateBoot(
+        now
+      );
+
+
+      /*
+        Stars rotate independently in the background.
+        They are NOT parented to EarthRoot.
+      */
 
       stars.rotation.y +=
         0.00016;
 
+
       stars.rotation.x +=
         0.000025;
+
 
       scene.render();
 
@@ -1781,8 +2064,9 @@ body{
      DEBUG MODULE LOADER
      
      ONLY loads the separate DEBUG CONSOLE.
-     It does NOT contain Earth, stars, camera,
-     boot animation, timeout system, etc.
+
+     The normal boot animation, Earth, stars, camera,
+     timeout system, and MePlay boot API remain here.
   ========================================================= */
 
   fetch("./meplay-debug.js")
@@ -1796,6 +2080,7 @@ body{
 
       }
 
+
       return response.text();
 
     })
@@ -1805,15 +2090,19 @@ body{
         encoded
           .replace(/\s+/g,"");
 
+
       const decoded =
         atob(cleaned);
+
 
       const runDebug =
         new Function(
           decoded
         );
 
+
       runDebug();
+
 
       console.log(
         "MEPLAY: Debug console module loaded."
