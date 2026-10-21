@@ -78,26 +78,34 @@ html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#020414;fon
 <div id="flash"></div>
 <div id="vmStage" aria-label="MePlay native OS"><div id="vmScreen"></div><div id="vmControls"><span>MePlay OS V1 · Native x86</span><button id="restartVM">Restart OS</button><button id="fullscreenVM">Fullscreen</button></div></div>
 <script>
-window.meplayV86Sources = [
-  {js:"vendor/libv86.js", wasm:"vendor/v86.wasm", bios:"vendor/seabios.bin", vga:"vendor/vgabios.bin"},
-  {js:"https://copy.sh/v86/build/libv86.js", wasm:"https://copy.sh/v86/build/v86.wasm", bios:"https://copy.sh/v86/bios/seabios.bin", vga:"https://copy.sh/v86/bios/vgabios.bin"}
-];
-function loadMePlayV86() {
- return new Promise((resolve,reject)=>{
-   let i=0;
-   function next(){
-     if(typeof V86Starter!=="undefined") return resolve(window.meplayV86Sources[Math.max(0,i-1)]);
-     if(i>=window.meplayV86Sources.length) return reject(new Error("v86 emulator unavailable. Download libv86.js, v86.wasm, seabios.bin and vgabios.bin into vendor/; see README.md. Online fallback may be blocked by your host."));
-     const source=window.meplayV86Sources[i++];
-     const script=document.createElement("script");
-     script.src=source.js;
-     script.onload=()=>typeof V86Starter!=="undefined"?resolve(source):next();
-     script.onerror=next;
-     document.head.appendChild(script);
-   }
-   next();
- });
+// MePlay v86 loader v2: local assets only; external cross-origin fallbacks are unreliable.
+async function loadMePlayV86(){
+  const files={js:'vendor/libv86.js',wasm:'vendor/v86.wasm',bios:'vendor/seabios.bin',vga:'vendor/vgabios.bin',disk:'meplay.img'};
+  const diagnostics=[];
+  for(const [label,path] of Object.entries(files)){
+    try{
+      const response=await fetch(path,{cache:'no-store'});
+      if(!response.ok)throw Error('HTTP '+response.status);
+      const bytes=await response.arrayBuffer();
+      if(bytes.byteLength<1000)throw Error('too small ('+bytes.byteLength+' bytes)');
+      if(label==='wasm' && new Uint8Array(bytes).slice(0,4).join(',')!=='0,97,115,109')throw Error('invalid WebAssembly header');
+      if(label==='disk' && bytes.byteLength<1474560)throw Error('disk image incomplete');
+    }catch(e){diagnostics.push(path+': '+e.message);}
+  }
+  if(diagnostics.length)throw Error('Missing/invalid deployment files: '+diagnostics.join(' | '));
+  if(typeof window.V86Starter!=='function'){
+    await new Promise((resolve,reject)=>{
+      const script=document.createElement('script');
+      script.src=files.js+'?v=meplay-shell-loader-2';
+      script.onload=resolve;
+      script.onerror=()=>reject(Error('Unable to execute '+files.js+' (check browser Console)'));
+      document.head.appendChild(script);
+    });
+  }
+  if(typeof window.V86Starter!=='function')throw Error('libv86.js loaded, but window.V86Starter is not available. Use a matching official browser build of v86.');
+  return files;
 }
+
 </script>
 
 <script>
