@@ -8,8 +8,8 @@ _start:
  mov %ax,%ss
  mov $0x7c00,%sp
  mov %dl,drive
- # BIOS VGA mode 13h (320x200x256)
- mov $0x0013,%ax
+ # BIOS VGA text mode 03h (80x25)
+ mov $0x0003,%ax
  int $0x10
  # Load 54 sectors from floppy, beginning CHS 0/0/2, to 1000:0000
  mov $0x1000,%ax

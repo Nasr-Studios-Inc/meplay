@@ -1,55 +1,74 @@
-/* MePlay OS V1: freestanding 32-bit x86 kernel, no libc or host OS. */
+
 #include <stdint.h>
-#define W 320
-#define H 200
-static volatile uint8_t *const fb=(volatile uint8_t*)0xA0000;
+#define COLS 80
+#define ROWS 25
+static volatile uint16_t* const video=(volatile uint16_t*)0xB8000;
+static int cx=0,cy=0;
+static uint8_t attr=0x1f;
 static inline uint8_t inb(uint16_t p){uint8_t v;__asm__ volatile("inb %1,%0":"=a"(v):"Nd"(p));return v;}
 static inline void outb(uint16_t p,uint8_t v){__asm__ volatile("outb %0,%1"::"a"(v),"Nd"(p));}
-static void rect(int x,int y,int w,int h,uint8_t c){for(int j=0;j<h;j++)for(int i=0;i<w;i++){int px=x+i,py=y+j;if(px>=0&&px<W&&py>=0&&py<H)fb[py*W+px]=c;}}
-/* Five-column uppercase font. Glyph rows are stored as 5-bit masks. */
-static const uint8_t glyphs[41][7]={
-{14,17,17,31,17,17,17}, /* A */ {30,17,17,30,17,17,30}, {14,17,16,16,16,17,14},
-{30,17,17,17,17,17,30}, {31,16,16,30,16,16,31}, {31,16,16,30,16,16,16},
-{14,17,16,23,17,17,15}, {17,17,17,31,17,17,17}, {31,4,4,4,4,4,31},
-{7,2,2,2,18,18,12}, {17,18,20,24,20,18,17}, {16,16,16,16,16,16,31},
-{17,27,21,21,17,17,17}, {17,25,21,19,17,17,17}, {14,17,17,17,17,17,14},
-{30,17,17,30,16,16,16}, {14,17,17,17,21,18,13}, {30,17,17,30,20,18,17},
-{15,16,16,14,1,1,30}, {31,4,4,4,4,4,4}, {17,17,17,17,17,17,14},
-{17,17,17,17,17,10,4}, {17,17,17,21,21,21,10}, {17,17,10,4,10,17,17},
-{17,17,10,4,4,4,4}, {31,1,2,4,8,16,31},
-{14,17,19,21,25,17,14}, {4,12,4,4,4,4,14}, {14,17,1,2,4,8,31},
-{30,1,1,14,1,1,30}, {2,6,10,18,31,2,2}, {31,16,30,1,1,17,14},
-{14,16,30,17,17,17,14}, {31,1,2,4,8,8,8}, {14,17,17,14,17,17,14},
-{14,17,17,15,1,1,14}, {0,0,0,0,0,0,0}, /* space */
-{0,4,4,4,4,0,4}, /* ! */ {0,0,31,0,31,0,0}, /* = */
-{0,0,0,31,0,0,0}, /* - */ {0,0,0,0,0,12,12} /* . */};
-static int indexof(char c){if(c>='A'&&c<='Z')return c-'A';if(c>='0'&&c<='9')return c-'0'+26;if(c=='!')return 37;if(c=='=')return 38;if(c=='-')return 39;if(c=='.')return 40;return 36;}
-static void ch(int x,int y,char c,uint8_t color,int scale){const uint8_t *g=glyphs[indexof(c)];for(int row=0;row<7;row++)for(int col=0;col<5;col++)if(g[row]&(1<<(4-col)))rect(x+col*scale,y+row*scale,scale,scale,color);}
-static void str(int x,int y,const char *s,uint8_t color,int scale){while(*s){ch(x,y,*s++,color,scale);x+=6*scale;}}
-static void panel(int x,int y,int w,int h,uint8_t bg){rect(x+2,y+3,w,h,233);rect(x,y,w,h,bg);rect(x,y,w,2,15);}
-static int selected=0,screen=0,volume=6,theme=0,installed=0,boots=1;
-static const char *labels[]={"GAMES","MEMART","MEVATAR","SETTINGS","STORAGE","ALBUM","NEWS","SYSTEM"};
-static const uint8_t colors[]={39,50,44,43,54,42,52,46};
-static void draw_home(void){
- rect(0,0,W,H,theme?24:231);rect(0,0,W,25,15);rect(0,25,W,2,43);
- rect(10,5,13,13,46);str(29,7,"MEPLAY",24,2);str(242,9,"OS V1",42,1);
- str(11,33,"HOME MENU",25,2);str(226,36,"SELECT APP",25,1);
- for(int i=0;i<8;i++){int x=13+(i%4)*76,y=54+(i/4)*62;rect(x+2,y+3,67,51,233);rect(x,y,67,51,selected==i?43:15);rect(x+3,y+3,61,45,colors[i]);rect(x+17,y+8,33,22,15);str(x+22,y+14,i==0?"G":i==1?"M":i==2?"U":i==3?"S":i==4?"D":i==5?"A":i==6?"N":"I",colors[i],2);str(x+7,y+36,labels[i],25,1);}
- rect(0,182,W,18,15);str(9,188,"ARROWS MOVE  ENTER OPEN  ESC HOME",25,1);
+static void scroll(){if(cy<ROWS)return;for(int y=1;y<ROWS;y++)for(int x=0;x<COLS;x++)video[(y-1)*COLS+x]=video[y*COLS+x];for(int x=0;x<COLS;x++)video[(ROWS-1)*COLS+x]=((uint16_t)attr<<8)|' ';cy=ROWS-1;}
+static void put(char c){if(c=='\n'){cx=0;cy++;scroll();return;}if(c=='\r'){cx=0;return;}if(c=='\b'){if(cx>0){cx--;video[cy*COLS+cx]=((uint16_t)attr<<8)|' ';}return;}video[cy*COLS+cx]=((uint16_t)attr<<8)|(uint8_t)c;if(++cx==COLS){cx=0;cy++;scroll();}}
+static void print(const char*s){while(*s)put(*s++);}
+static void clear(){for(int i=0;i<COLS*ROWS;i++)video[i]=((uint16_t)attr<<8)|' ';cx=cy=0;}
+static int eq(const char*a,const char*b){while(*a&&*a==*b){a++;b++;}return *a==*b;}
+static int prefix(const char*a,const char*b){while(*b){if(*a++!=*b++)return 0;}return 1;}
+static char line[128];static int len=0;static uint32_t commands=0;
+static void prompt(){print("\nmeplay:/ $ ");}
+static void num(uint32_t n){char b[12];int i=0;do{b[i++]='0'+n%10;n/=10;}while(n);while(i)put(b[--i]);}
+static void run(){
+ line[len]=0;commands++;
+ if(eq(line,"help"))print("Commands: help, clear, cls, version, uname, about, echo TEXT,\n          ls, pwd, whoami, apps, settings, mem, uptime,\n          reboot, shutdown, color blue, color black\n");
+ else if(eq(line,"clear")||eq(line,"cls"))clear();
+ else if(eq(line,"version")||eq(line,"uname"))print("MePlay OS 1.0-dev | x86 32-bit | native C kernel\n");
+ else if(eq(line,"about"))print("MePlay is a native experimental console OS.\nRunning on emulated x86 hardware, not inside JavaScript.\n");
+ else if(prefix(line,"echo ")) {print(line+5);put('\n');}
+ else if(eq(line,"echo"))put('\n');
+ else if(eq(line,"ls"))print("system/   apps/   users/   games/  (virtual placeholders)\n");
+ else if(eq(line,"pwd"))print("/\n");
+ else if(eq(line,"whoami"))print("player\n");
+ else if(eq(line,"apps"))print("Shell [running]   MeMart [planned]   Games [planned]\n");
+ else if(eq(line,"settings"))print("Settings service not implemented yet.\n");
+ else if(eq(line,"mem"))print("Kernel loaded in 32-bit protected mode. Memory manager: TODO.\n");
+ else if(eq(line,"uptime")){print("Commands executed: ");num(commands);put('\n');}
+ else if(eq(line,"color blue")){attr=0x1f;clear();}
+ else if(eq(line,"color black")){attr=0x0f;clear();}
+ else if(eq(line,"reboot")){print("Rebooting...\n");outb(0x64,0xfe);for(;;)__asm__ volatile("hlt");}
+ else if(eq(line,"shutdown")){print("Halting MePlay OS. Restart VM to boot again.\n");__asm__ volatile("cli");for(;;)__asm__ volatile("hlt");}
+ else if(len){print("Unknown command: ");print(line);print("\nType help for available commands.\n");}
+ len=0;prompt();
 }
-static void draw_app(void){rect(0,0,W,H,theme?24:231);rect(0,0,W,26,15);str(10,8,"MEPLAY",24,2);str(222,10,labels[screen-1],42,1);panel(13,36,294,130,15);str(25,47,labels[screen-1],25,2);
- switch(screen){
- case 1:str(25,78,"INSTALLED GAMES",24,1);str(25,100,installed?"COSMIC KART - READY":"NO GAMES INSTALLED",25,1);str(25,128,"OPEN MEMART TO INSTALL",42,1);break;
- case 2:str(25,78,"COSMIC KART",24,2);str(25,107,installed?"ALREADY INSTALLED":"PRESS ENTER TO INSTALL",25,1);str(25,132,"LOCAL DEMO APP",42,1);break;
- case 3:str(25,79,"PLAYER ONE",24,2);str(25,111,"MEVATAR EDITOR COMING SOON",25,1);break;
- case 4:str(25,76,"LEFT RIGHT CHANGE VOLUME",24,1);str(25,95,"VOLUME",25,1);rect(88,95,volume*16,8,43);str(25,118,"ENTER TO CHANGE THEME",42,1);break;
- case 5:str(25,80,"VIRTUAL DISK SUPPORT",24,1);str(25,105,"NOT YET IMPLEMENTED",25,1);break;
- case 6:str(25,87,"NO SCREENSHOTS YET",24,1);break;
- case 7:str(25,87,"WELCOME TO MEPLAY OS V1!",24,1);break;
- case 8:str(25,78,"CUSTOM X86 KERNEL",24,1);str(25,97,"32 BIT PROTECTED MODE",25,1);str(25,116,"QEMU AND V86 COMPATIBLE",42,1);break;
+static const char unshift[128]={
+ [2]='1',[3]='2',[4]='3',[5]='4',[6]='5',[7]='6',[8]='7',[9]='8',[10]='9',[11]='0',
+ [12]='-',[13]='=',[16]='q',[17]='w',[18]='e',[19]='r',[20]='t',[21]='y',[22]='u',[23]='i',[24]='o',[25]='p',
+ [26]='[',[27]=']',[30]='a',[31]='s',[32]='d',[33]='f',[34]='g',[35]='h',[36]='j',[37]='k',[38]='l',
+ [39]=';',[40]='\'',[41]='`',[43]='\\',[44]='z',[45]='x',[46]='c',[47]='v',[48]='b',[49]='n',[50]='m',
+ [51]=',',[52]='.',[53]='/',[57]=' '
+};
+static int shift=0;
+static void key(uint8_t scan){
+ int released=scan&0x80;uint8_t code=scan&0x7f;
+ if(code==42||code==54){shift=!released;return;}
+ if(released)return;
+ if(code==28){put('\n');run();return;}
+ if(code==14){if(len){len--;put('\b');}return;}
+ if(code==1){len=0;print("^C");prompt();return;}
+ char c=unshift[code];if(!c||len>=126)return;
+ if(shift&&c>='a'&&c<='z')c-=32;
+ line[len++]=c;put(c);
+}
+void kernel_main(void){
+ outb(0x21,0xff);outb(0xa1,0xff);
+ clear();
+ print("==========================================================================\n");
+ print("                       MePlay OS - Native Shell V1\n");
+ print("==========================================================================\n");
+ print("Custom C kernel | x86 protected mode | QEMU / v86\n");
+ print("Type 'help' to see available commands.\n");
+ prompt();
+ uint8_t e0=0;
+ for(;;){
+   if(inb(0x64)&1){uint8_t k=inb(0x60);if(k==0xe0){e0=1;continue;}if(e0){e0=0;continue;}key(k);}
+   __asm__ volatile("pause");
  }
- rect(0,182,W,18,15);str(10,188,"ESC HOME   ENTER ACTION",25,1);
 }
-static void draw(void){if(!screen)draw_home();else draw_app();}
-static void key(uint8_t k){if(k==1){screen=0;draw();return;}if(!screen){if(k==0x4b&&selected%4)selected--;if(k==0x4d&&selected%4<3)selected++;if(k==0x48&&selected>=4)selected-=4;if(k==0x50&&selected<4)selected+=4;if(k==0x1c)screen=selected+1;}else if(screen==2&&k==0x1c)installed=1;else if(screen==4){if(k==0x4b&&volume)volume--;if(k==0x4d&&volume<10)volume++;if(k==0x1c)theme=!theme;}draw();}
-void kernel_main(void){(void)boots;outb(0x21,0xff);outb(0xa1,0xff);draw();uint8_t last=0;for(;;){uint8_t status=inb(0x64);if(status&1){uint8_t k=inb(0x60);if(!(k&0x80)&&k!=0xe0){if(k!=last)key(k);last=k;}else if(k&0x80)last=0;}__asm__ volatile("pause");}}
