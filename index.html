@@ -67,7 +67,28 @@ html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#020414;fon
 <div id="status">Entering MePlay OS</div>
 <div id="flash"></div>
 <div id="vmStage" aria-label="MePlay native OS"><div id="vmScreen"></div><div id="vmControls"><span>MePlay OS V1 · Native x86</span><button id="restartVM">Restart OS</button><button id="fullscreenVM">Fullscreen</button></div></div>
-<script src="vendor/libv86.js"></script>
+<script>
+window.meplayV86Sources = [
+  {js:"vendor/libv86.js", wasm:"vendor/v86.wasm", bios:"vendor/seabios.bin", vga:"vendor/vgabios.bin"},
+  {js:"https://copy.sh/v86/build/libv86.js", wasm:"https://copy.sh/v86/build/v86.wasm", bios:"https://copy.sh/v86/bios/seabios.bin", vga:"https://copy.sh/v86/bios/vgabios.bin"}
+];
+function loadMePlayV86() {
+ return new Promise((resolve,reject)=>{
+   let i=0;
+   function next(){
+     if(typeof V86Starter!=="undefined") return resolve(window.meplayV86Sources[Math.max(0,i-1)]);
+     if(i>=window.meplayV86Sources.length) return reject(new Error("Could not load v86 locally or from copy.sh. Check internet access, or install the v86 files in vendor/."));
+     const source=window.meplayV86Sources[i++];
+     const script=document.createElement("script");
+     script.src=source.js;
+     script.onload=()=>typeof V86Starter!=="undefined"?resolve(source):next();
+     script.onerror=next;
+     document.head.appendChild(script);
+   }
+   next();
+ });
+}
+</script>
 
 <script>
 (async () => {
@@ -91,16 +112,31 @@ let finishedShown=false;
 let vmReady=false,vmError=false,vm=null;
 const vmStage=document.getElementById('vmStage');
 const vmScreen=document.getElementById('vmScreen');
-function startNativeOS(){
- if(typeof V86Starter==='undefined'){
-  vmError=true;loadingSubtext.textContent='Missing v86 runtime — see README.md';
-  errorPanel.classList.add('show');document.getElementById('errorMessage').textContent='v86 runtime missing. Place libv86.js, v86.wasm and BIOS files in vendor/ (see README.md).';return;
- }
- try{
-  vm=new V86Starter({wasm_path:'vendor/v86.wasm',memory_size:32*1024*1024,vga_memory_size:8*1024*1024,screen_container:vmScreen,bios:{url:'vendor/seabios.bin'},vga_bios:{url:'vendor/vgabios.bin'},fda:{url:'meplay.img',async:false},autostart:true});
+async function startNativeOS(){
+ try {
+  loadingSubtext.textContent='Loading virtual console';
+  const source=await loadMePlayV86();
+  vm=new V86Starter({
+    wasm_path:source.wasm,
+    memory_size:32*1024*1024,
+    vga_memory_size:8*1024*1024,
+    screen_container:vmScreen,
+    bios:{url:source.bios},
+    vga_bios:{url:source.vga},
+    fda:{url:'meplay.img',async:false},
+    autostart:true
+  });
   window.meplayVM=vm;
-  vm.add_listener('emulator-ready',()=>{vmReady=true;loadingSubtext.textContent='Virtual hardware initialized';meplayBootCommand('loading-complete:true');});
- }catch(e){vmError=true;errorPanel.classList.add('show');document.getElementById('errorMessage').textContent='Emulator failed to initialize: '+e.message;}
+  vm.add_listener('emulator-ready',()=>{
+    vmReady=true;
+    loadingSubtext.textContent='Virtual hardware initialized';
+    meplayBootCommand('loading-complete:true');
+  });
+ } catch(e) {
+  vmError=true;
+  errorPanel.classList.add('show');
+  document.getElementById('errorMessage').textContent='Virtual console failed to load: '+e.message;
+ }
 }
 document.getElementById('restartVM').onclick=()=>{if(vm)vm.restart();};
 document.getElementById('fullscreenVM').onclick=()=>vmStage.requestFullscreen?.();
